@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 
 const MODEL = 'gemini-3.5-flash-lite';
-// CLAUDE.md §6.2는 10초를 적었지만 무료 티어 실측이 7.7~11.8초다 (13토큰 프롬프트도 11.8초로,
+// 처음 정한 값은 10초였지만 무료 티어 실측이 7.7~11.8초다 (13토큰 프롬프트도 11.8초로,
 // 느린 원인은 우리 프롬프트가 아니라 공급자 지연이다). 10초면 절반이 헛되이 끊긴다.
 // Vercel Hobby 함수 한도는 300초라 배포 쪽 제약은 아니다.
 const TIMEOUT_MS = 25_000;

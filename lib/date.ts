@@ -1,4 +1,4 @@
-// 모든 비교는 YYYY-MM-DD 문자열로 한다. Date 객체 비교는 타임존 버그의 원인이다. (§4.2)
+// 모든 비교는 YYYY-MM-DD 문자열로 한다. Date 객체 비교는 타임존 버그의 원인이다.
 
 function ymd(d: Date): string {
   const y = d.getFullYear();

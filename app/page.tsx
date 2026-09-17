@@ -49,7 +49,7 @@ export default function Home() {
     setPicking(true);
     setPickError(null);
     setPick(null);
-    // §6.1의 titles: string[] 계약을 지키면서 §5.4가 요구하는 마감일을 함께 넘긴다.
+    // API 계약은 titles: string[] 하나다. 추천 판단에 필요한 마감일은 제목 문자열에 실어 보낸다.
     const titles = open.map((t) => (t.dueDate ? `${t.title} (마감 ${dueLabel(t.dueDate).text})` : t.title));
     try {
       const res = await fetch('/api/recommend', {

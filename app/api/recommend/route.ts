@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       recommendInput(titles),
       RECOMMEND_SCHEMA,
     );
-    // 모델이 범위 밖 번호를 주면 첫 항목으로 폴백한다. 절대 크래시하지 않는다. (§5.4)
+    // 모델이 범위 밖 번호를 주면 첫 항목으로 폴백한다. 추천이 틀리는 것보다 앱이 죽는 게 나쁘다.
     const index = Number.isInteger(got?.index) && got.index >= 1 && got.index <= titles.length ? got.index - 1 : 0;
     const reason = typeof got?.reason === 'string' ? got.reason.trim().slice(0, 40) : '';
     return Response.json({ index, reason });
