@@ -5,29 +5,48 @@ const TIMEOUT_MS = 10_000;
 
 class TimeoutError extends Error {}
 
-export async function ask(system: string, input: string, maxTokens = 1024): Promise<string> {
-  const call = new GoogleGenAI({}).interactions.create({
-    model: MODEL,
-    system_instruction: system,
-    input,
-    // Free tier trains on stored traffic; these are the user's own to-dos.
-    store: false,
-    // thinking tokens share max_output_tokens — a 256 budget truncated answers mid-word
-    // and oneLine() then returned a fragment of the reasoning. Budget covers both now.
-    generation_config: { max_output_tokens: maxTokens, thinking_level: 'minimal' },
-  });
-
+function withTimeout<T>(call: Promise<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => reject(new TimeoutError()), TIMEOUT_MS);
   });
+  return Promise.race([call, timeout]).finally(() => clearTimeout(timer));
+}
 
-  try {
-    const res = await Promise.race([call, timeout]);
-    return (res.output_text ?? '').trim();
-  } finally {
-    clearTimeout(timer);
-  }
+export async function ask(system: string, input: string, maxTokens = 1024): Promise<string> {
+  const res = await withTimeout(
+    new GoogleGenAI({}).interactions.create({
+      model: MODEL,
+      system_instruction: system,
+      input,
+      // Free tier trains on stored traffic; these are the user's own to-dos.
+      store: false,
+      // thinking tokens share max_output_tokens — a 256 budget truncated answers mid-word
+      // and oneLine() then returned a fragment of the reasoning. Budget covers both now.
+      generation_config: { max_output_tokens: maxTokens, thinking_level: 'minimal' },
+    }),
+  );
+  return (res.output_text ?? '').trim();
+}
+
+/** JSON 스키마를 강제해서 받는다. 코드펜스나 설명이 섞여 들어올 여지를 없앤다. */
+export async function askJson<T>(
+  system: string,
+  input: string,
+  schema: Record<string, unknown>,
+  maxTokens = 1024,
+): Promise<T> {
+  const res = await withTimeout(
+    new GoogleGenAI({}).interactions.create({
+      model: MODEL,
+      system_instruction: system,
+      input,
+      store: false,
+      response_format: { type: 'text', mime_type: 'application/json', schema },
+      generation_config: { max_output_tokens: maxTokens, thinking_level: 'minimal' },
+    }),
+  );
+  return JSON.parse(res.output_text ?? '') as T;
 }
 
 // The prompt is the real fix for leaked prefixes, but a free-tier model slips

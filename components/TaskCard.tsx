@@ -1,22 +1,25 @@
 'use client';
 
 import { useState } from 'react';
+import { dueLabel } from '@/lib/date';
 import type { Task } from '@/types';
 
 const MAX_DEPTH = 3;
 
 type Props = {
   task: Task;
+  reason: string | null;
   onChange: (fn: (t: Task) => Task) => void;
   onRemove: () => void;
 };
 
-export default function TaskCard({ task, onChange, onRemove }: Props) {
+export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const done = !!task.completedAt;
   const last = task.steps[task.steps.length - 1];
+  const due = task.dueDate ? dueLabel(task.dueDate) : null;
 
   async function split() {
     setBusy(true);
@@ -68,10 +71,26 @@ export default function TaskCard({ task, onChange, onRemove }: Props) {
   }
 
   return (
-    <li className={`border-b border-line py-4 transition-opacity ${done ? 'opacity-40' : ''}`}>
+    <li
+      className={`-mx-3 rounded-xl border-b border-line px-3 py-4 transition-colors ${
+        done ? 'opacity-40' : ''
+      } ${reason !== null ? 'bg-accent/[0.06]' : ''}`}
+    >
+      {reason !== null && (
+        <p className="mb-2 text-[13px] text-accent">이것부터 해보세요{reason && ` · ${reason}`}</p>
+      )}
       <div className="flex items-start gap-3">
         <Check checked={done} onClick={toggleTask} />
-        <span className={`flex-1 leading-relaxed ${done ? 'line-through' : ''}`}>{task.title}</span>
+        <span className={`min-w-0 flex-1 leading-relaxed ${done ? 'line-through' : ''}`}>
+          {task.title}
+        </span>
+        {due && (
+          <span
+            className={`mt-[3px] shrink-0 text-[13px] ${due.urgent && !done ? 'text-accent' : 'text-mute'}`}
+          >
+            {due.text}
+          </span>
+        )}
         <button
           onClick={onRemove}
           aria-label="삭제"

@@ -33,3 +33,28 @@ export const breakdownInput = (title: string) => title.trim();
 
 export const breakdownMoreInput = (title: string, previousStep: string) =>
   `할 일: ${title.trim()}\n제시받은 행동: ${previousStep.trim()}`;
+
+export const RECOMMEND_SYSTEM = `너는 미루기를 겪는 사람이 할 일을 시작하도록 돕는다.
+사용자가 오늘의 할 일 목록을 번호와 함께 보여준다.
+그중 지금 당장 시작하기 가장 쉬운 항목 하나를 골라 그 번호를 답하라.
+
+고르는 기준 (앞쪽이 더 중요하다):
+1. 착수 비용이 낮다. 준비물이 적고 단계가 짧다.
+2. 그것을 끝내면 다른 항목을 막고 있던 장애물이 풀린다.
+3. 마감이 임박했다.
+
+reason은 그 항목을 고른 이유를 20자 이내로 쓴다. "~요"로 끝나는 부드러운 말투로 쓴다.
+사용자를 재촉하거나 미룬 것을 지적하지 않는다. 담담하게 사실만 쓴다.
+index는 사용자가 보여준 번호를 그대로 쓴다.`;
+
+export const recommendInput = (titles: string[]) =>
+  titles.map((t, i) => `${i + 1}. ${t}`).join('\n');
+
+export const RECOMMEND_SCHEMA = {
+  type: 'object',
+  properties: {
+    index: { type: 'integer', description: '고른 항목의 번호' },
+    reason: { type: 'string', description: '20자 이내 이유' },
+  },
+  required: ['index', 'reason'],
+};
