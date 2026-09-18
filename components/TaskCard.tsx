@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Check from '@/components/Check';
+import EditableTitle from '@/components/EditableTitle';
 import IconButton from '@/components/IconButton';
 import { RetryIcon, XIcon } from '@/components/icons';
 import { dueLabel } from '@/lib/date';
@@ -117,9 +118,11 @@ export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
 
       <div className="flex items-start gap-1 py-1">
         <Check checked={done} onClick={toggleTask} label={`${task.title} 완료`} />
-        <span className={`min-w-0 flex-1 self-center py-2 leading-relaxed ${done ? 'line-through' : ''}`}>
-          {task.title}
-        </span>
+        <EditableTitle
+          value={task.title}
+          done={done}
+          onSave={(title) => onChange((t) => ({ ...t, title }))}
+        />
         {due && (
           <span
             className={`shrink-0 self-center text-[13px] tabular-nums ${
