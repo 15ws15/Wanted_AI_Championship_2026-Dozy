@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import CalendarView from '@/components/CalendarView';
+import EmptyState from '@/components/EmptyState';
 import HistoryView from '@/components/HistoryView';
 import TaskCard from '@/components/TaskCard';
 import ViewTabs, { type View } from '@/components/ViewTabs';
@@ -29,21 +30,25 @@ export default function Home() {
     if (loaded) saveTasks(tasks);
   }, [tasks, loaded]);
 
-  function add(e: React.FormEvent) {
-    e.preventDefault();
-    const title = draft.trim();
-    if (!title) return;
+  function addTask(title: string, dueDate: string | null = null) {
     setTasks((ts) => [
       ...ts,
       {
         id: crypto.randomUUID(),
         title,
         createdAt: new Date().toISOString(),
-        dueDate: due || null,
+        dueDate,
         completedAt: null,
         steps: [],
       },
     ]);
+  }
+
+  function add(e: React.FormEvent) {
+    e.preventDefault();
+    const title = draft.trim();
+    if (!title) return;
+    addTask(title, due || null);
     setDraft('');
     setDue('');
   }
@@ -146,15 +151,7 @@ export default function Home() {
             </div>
           )}
 
-          {loaded && tasks.length === 0 && (
-            <p className="mt-10 text-sm leading-loose text-mute">
-              할 일을 하나 적어 보세요.
-              <br />
-              막막하면 <span className="text-ink">쪼개기</span>를 누르면 돼요.
-              <br />
-              지금 5분 안에 할 수 있는 행동 하나로 바꿔 드릴게요.
-            </p>
-          )}
+          {loaded && tasks.length === 0 && <EmptyState onPick={(t) => addTask(t)} />}
 
           {open.length > 0 && (
             <section className="mt-8">
