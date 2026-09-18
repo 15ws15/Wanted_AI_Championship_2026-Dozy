@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node lib/date.test.ts && node lib/storage.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.23.0",
