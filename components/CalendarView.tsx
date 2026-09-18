@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import IconButton from '@/components/IconButton';
+import { ChevronIcon } from '@/components/icons';
 import { monthCells, monthLabel, shiftMonth, thisMonth, todayStr } from '@/lib/date';
 import type { Task } from '@/types';
 
@@ -20,9 +22,13 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
   return (
     <section className="mt-6">
       <header className="flex items-center justify-between">
-        <Arrow onClick={() => setMonth(shiftMonth(month, -1))} label="이전 달" dir="left" />
+        <IconButton onClick={() => setMonth(shiftMonth(month, -1))} label="이전 달">
+          <ChevronIcon dir="left" />
+        </IconButton>
         <h2 className="text-[15px] font-medium tabular-nums">{monthLabel(month)}</h2>
-        <Arrow onClick={() => setMonth(shiftMonth(month, 1))} label="다음 달" dir="right" />
+        <IconButton onClick={() => setMonth(shiftMonth(month, 1))} label="다음 달">
+          <ChevronIcon dir="right" />
+        </IconButton>
       </header>
 
       <div className="mt-3 grid grid-cols-7 text-center text-[13px]">
@@ -81,34 +87,5 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
         </div>
       )}
     </section>
-  );
-}
-
-function Arrow({
-  onClick,
-  label,
-  dir,
-}: {
-  onClick: () => void;
-  label: string;
-  dir: 'left' | 'right';
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      className="flex h-11 w-11 items-center justify-center rounded-full text-mute transition-colors hover:bg-line/70 hover:text-ink"
-    >
-      <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
-        <path
-          d={dir === 'left' ? 'M12.5 4L6.5 10l6 6' : 'M7.5 4l6 6-6 6'}
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </svg>
-    </button>
   );
 }

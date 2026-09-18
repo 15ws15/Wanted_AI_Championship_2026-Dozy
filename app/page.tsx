@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import CalendarView from '@/components/CalendarView';
 import EmptyState from '@/components/EmptyState';
+import { PlusIcon } from '@/components/icons';
 import HistoryView from '@/components/HistoryView';
 import TaskCard from '@/components/TaskCard';
 import ViewTabs, { type View } from '@/components/ViewTabs';
@@ -128,9 +129,7 @@ export default function Home() {
               aria-label="할 일 추가"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-mute transition-colors hover:bg-accent-wash hover:text-accent disabled:opacity-30"
             >
-              <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden="true">
-                <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
+              <PlusIcon className="h-5 w-5" />
             </button>
           </form>
 
