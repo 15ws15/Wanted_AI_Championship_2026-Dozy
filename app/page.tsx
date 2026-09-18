@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CalendarView from '@/components/CalendarView';
+import HistoryView from '@/components/HistoryView';
 import TaskCard from '@/components/TaskCard';
 import { dueLabel } from '@/lib/date';
 import { loadTasks, saveTasks } from '@/lib/storage';
@@ -14,6 +16,7 @@ export default function Home() {
   const [pick, setPick] = useState<{ id: string; reason: string } | null>(null);
   const [picking, setPicking] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'calendar' | 'history'>('list');
 
   useEffect(() => {
     setTasks(loadTasks());
@@ -81,6 +84,8 @@ export default function Home() {
         <p className="mt-1 text-sm text-mute">시작하기 어려운 일을, 지금 할 수 있는 한 가지로.</p>
       </header>
 
+      {view === 'list' && (
+        <>
       <form onSubmit={add} className="flex flex-wrap items-center gap-2 border-b border-line pb-3">
         <input
           value={draft}
@@ -140,6 +145,27 @@ export default function Home() {
           />
         ))}
       </ul>
+        </>
+      )}
+
+      {view === 'calendar' && <CalendarView tasks={tasks} />}
+      {view === 'history' && <HistoryView tasks={tasks} />}
+
+      <nav className="mt-12 flex gap-5 border-t border-line pt-4 text-[13px]">
+        {([
+          ['list', '오늘 할 일'],
+          ['calendar', '달력'],
+          ['history', '지난 기록'],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`transition-colors ${view === key ? 'text-ink' : 'text-mute hover:text-ink'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
     </main>
   );
 }
