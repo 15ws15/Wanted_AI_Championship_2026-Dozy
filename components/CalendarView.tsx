@@ -12,12 +12,19 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
   const [month, setMonth] = useState(thisMonth());
   const [picked, setPicked] = useState<string | null>(todayStr());
 
-  const byDate: Record<string, Task[]> = {};
-  for (const t of tasks) if (t.dueDate) (byDate[t.dueDate] ??= []).push(t);
+  // 마감일은 선택 입력이라 대다수 할 일이 dueDate 없이 쌓인다. 마감만 찍으면
+  // 달력이 계속 비어 있게 되므로 끝낸 날도 함께 찍는다.
+  const due: Record<string, Task[]> = {};
+  const finished: Record<string, Task[]> = {};
+  for (const t of tasks) {
+    if (t.dueDate && !t.completedAt) (due[t.dueDate] ??= []).push(t);
+    if (t.completedAt) (finished[t.completedAt.slice(0, 10)] ??= []).push(t);
+  }
 
   const today = todayStr();
   // 데이터가 없는 날짜를 눌러도 빈 배열을 받는다. 여기서 깨지면 안 된다.
-  const onPicked = picked ? (byDate[picked] ?? []) : [];
+  const pickedDue = picked ? (due[picked] ?? []) : [];
+  const pickedDone = picked ? (finished[picked] ?? []) : [];
 
   return (
     <section className="mt-6">
@@ -46,7 +53,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
               key={date}
               onClick={() => setPicked(date)}
               aria-pressed={picked === date}
-              className={`relative flex h-11 w-full flex-col items-center justify-center rounded-xl tabular-nums transition-colors ${
+              className={`relative flex h-11 w-full items-center justify-center rounded-xl tabular-nums transition-colors ${
                 picked === date
                   ? 'bg-accent font-medium text-paper'
                   : date === today
@@ -54,15 +61,25 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
                     : 'hover:bg-line/70'
               }`}
             >
-              {Number(date.slice(8))}
-              {byDate[date] && (
-                <span
-                  aria-hidden="true"
-                  className={`absolute bottom-[7px] h-1 w-1 rounded-full ${
-                    picked === date ? 'bg-paper' : 'bg-accent'
-                  }`}
-                />
-              )}
+              <span className="-translate-y-[3px]">{Number(date.slice(8))}</span>
+              {/* 점은 "여기 뭔가 있다"는 표시일 뿐이다. 마감인지 끝낸 일인지는
+                  아래 목록이 글자로 말한다 — 색만으로 뜻을 전달하지 않는다. */}
+              <span className="absolute bottom-[6px] flex gap-[3px]">
+                {due[date] && (
+                  <span
+                    aria-hidden="true"
+                    className={`h-1 w-1 rounded-full ${picked === date ? 'bg-paper' : 'bg-accent'}`}
+                  />
+                )}
+                {finished[date] && (
+                  <span
+                    aria-hidden="true"
+                    className={`h-1 w-1 rounded-full border ${
+                      picked === date ? 'border-paper' : 'border-mute'
+                    }`}
+                  />
+                )}
+              </span>
             </button>
           ),
         )}
@@ -70,22 +87,35 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
 
       {picked && (
         <div className="mt-5 border-t border-line pt-4">
-          {onPicked.length === 0 ? (
+          {pickedDue.length === 0 && pickedDone.length === 0 ? (
             <p className="text-sm text-mute">이 날은 비어 있어요.</p>
           ) : (
-            <ul className="space-y-3">
-              {onPicked.map((t) => (
-                <li
-                  key={t.id}
-                  className={`text-sm leading-relaxed ${t.completedAt ? 'text-mute line-through' : ''}`}
-                >
-                  {t.title}
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-5">
+              <DayGroup label="마감" items={pickedDue} />
+              <DayGroup label="끝냄" items={pickedDone} done />
+            </div>
           )}
         </div>
       )}
     </section>
+  );
+}
+
+function DayGroup({ label, items, done }: { label: string; items: Task[]; done?: boolean }) {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <h3 className="text-[13px] text-mute">{label}</h3>
+      <ul className="mt-2 space-y-2">
+        {items.map((t) => (
+          <li
+            key={t.id}
+            className={`text-sm leading-relaxed ${done ? 'text-mute line-through' : ''}`}
+          >
+            {t.title}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
