@@ -72,59 +72,85 @@ export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
 
   return (
     <li
-      className={`-mx-3 rounded-xl border-b border-line px-3 py-4 transition-colors ${
-        done ? 'opacity-40' : ''
-      } ${reason !== null ? 'bg-accent/[0.06]' : ''}`}
+      className={`-mx-2 rounded-2xl px-2 transition-colors ${
+        reason !== null ? 'bg-accent-wash' : ''
+      } ${done ? 'opacity-50' : ''}`}
     >
       {reason !== null && (
-        <p className="mb-2 text-[13px] text-accent">이것부터 해보세요{reason && ` · ${reason}`}</p>
+        <p className="px-2 pt-3 text-[13px] font-medium text-accent">
+          이것부터 해보세요{reason && ` · ${reason}`}
+        </p>
       )}
-      <div className="flex items-start gap-3">
-        <Check checked={done} onClick={toggleTask} />
-        <span className={`min-w-0 flex-1 leading-relaxed ${done ? 'line-through' : ''}`}>
+
+      <div className="flex items-start gap-1 py-1">
+        <Check checked={done} onClick={toggleTask} label={`${task.title} 완료`} />
+        <span
+          className={`min-w-0 flex-1 self-center py-2 leading-relaxed ${done ? 'line-through' : ''}`}
+        >
           {task.title}
         </span>
         {due && (
           <span
-            className={`mt-[3px] shrink-0 text-[13px] ${due.urgent && !done ? 'text-accent' : 'text-mute'}`}
+            className={`shrink-0 self-center text-[13px] tabular-nums ${
+              due.urgent && !done ? 'font-medium text-accent' : 'text-mute'
+            }`}
           >
             {due.text}
           </span>
         )}
         <button
           onClick={onRemove}
-          aria-label="삭제"
-          className="px-1 text-mute/50 transition-colors hover:text-mute"
+          aria-label={`${task.title} 삭제`}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-mute/60 transition-colors hover:bg-line/60 hover:text-mute"
         >
-          ×
+          <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
+            <path
+              d="M5 5l10 10M15 5L5 15"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
         </button>
       </div>
 
       {task.steps.map((step) => (
         <div
           key={step.id}
-          className="mt-3 flex items-start gap-3 text-[15px]"
-          style={{ paddingLeft: `${step.depth * 18 + 10}px` }}
+          className="flex items-start gap-1 text-[15px]"
+          style={{ paddingLeft: `${step.depth * 16}px` }}
         >
-          <span className="mt-[7px] h-px w-3 shrink-0 bg-line" />
-          <Check checked={!!step.completedAt} onClick={() => toggleStep(step.id)} />
-          <span className={`flex-1 leading-relaxed ${step.completedAt ? 'text-mute line-through' : ''}`}>
+          <span className="mt-[21px] h-px w-3 shrink-0 bg-line-strong" aria-hidden="true" />
+          <Check
+            checked={!!step.completedAt}
+            onClick={() => toggleStep(step.id)}
+            label={`${step.text} 완료`}
+          />
+          <span
+            className={`min-w-0 flex-1 self-center py-2 leading-relaxed ${
+              step.completedAt ? 'text-mute line-through' : ''
+            }`}
+          >
             {step.text}
           </span>
         </div>
       ))}
 
       {!done && (!last || last.depth < MAX_DEPTH) && (
-        <div style={{ paddingLeft: `${(last ? last.depth + 1 : 0) * 18 + 26}px` }} className="mt-3">
+        <div
+          className="pb-3 pt-1"
+          style={{ paddingLeft: `${(last ? last.depth + 1 : 0) * 16 + 16}px` }}
+        >
           <button
             onClick={split}
             disabled={busy}
-            className="rounded-full border border-line px-3 py-1 text-[13px] text-mute transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+            className="min-h-11 rounded-full border border-line-strong px-4 text-[13px] text-mute transition-colors hover:border-accent hover:bg-accent-wash hover:text-accent disabled:opacity-50"
           >
             {busy ? '생각하는 중…' : last ? '이것도 어려워요' : '쪼개기'}
           </button>
           {error && (
-            <p className="mt-2 text-[13px] text-mute">
+            <p role="status" className="mt-2 text-[13px] text-mute">
               {error}
             </p>
           )}
@@ -134,15 +160,41 @@ export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
   );
 }
 
-function Check({ checked, onClick }: { checked: boolean; onClick: () => void }) {
+function Check({
+  checked,
+  onClick,
+  label,
+}: {
+  checked: boolean;
+  onClick: () => void;
+  label: string;
+}) {
   return (
     <button
       role="checkbox"
       aria-checked={checked}
+      aria-label={label}
       onClick={onClick}
-      className={`mt-[3px] h-[18px] w-[18px] shrink-0 rounded-full border transition-colors ${
-        checked ? 'border-accent bg-accent' : 'border-line hover:border-mute'
-      }`}
-    />
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+    >
+      <span
+        className={`flex h-[20px] w-[20px] items-center justify-center rounded-full border transition-colors ${
+          checked ? 'border-accent bg-accent' : 'border-line-strong hover:border-mute'
+        }`}
+      >
+        {checked && (
+          <svg viewBox="0 0 12 12" className="h-3 w-3 text-paper" aria-hidden="true">
+            <path
+              d="M2.5 6.2l2.4 2.4L9.5 4"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
+        )}
+      </span>
+    </button>
   );
 }

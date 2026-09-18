@@ -20,26 +20,14 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
   return (
     <section className="mt-6">
       <header className="flex items-center justify-between">
-        <button
-          onClick={() => setMonth(shiftMonth(month, -1))}
-          aria-label="이전 달"
-          className="px-3 py-1 text-mute transition-colors hover:text-ink"
-        >
-          ‹
-        </button>
-        <h2 className="text-[15px]">{monthLabel(month)}</h2>
-        <button
-          onClick={() => setMonth(shiftMonth(month, 1))}
-          aria-label="다음 달"
-          className="px-3 py-1 text-mute transition-colors hover:text-ink"
-        >
-          ›
-        </button>
+        <Arrow onClick={() => setMonth(shiftMonth(month, -1))} label="이전 달" dir="left" />
+        <h2 className="text-[15px] font-medium tabular-nums">{monthLabel(month)}</h2>
+        <Arrow onClick={() => setMonth(shiftMonth(month, 1))} label="다음 달" dir="right" />
       </header>
 
-      <div className="mt-4 grid grid-cols-7 text-center text-[13px]">
+      <div className="mt-3 grid grid-cols-7 text-center text-[13px]">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="pb-2 text-mute/70">
+          <div key={d} className="pb-1 text-mute/70">
             {d}
           </div>
         ))}
@@ -51,14 +39,20 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
             <button
               key={date}
               onClick={() => setPicked(date)}
-              className={`relative mx-auto my-[2px] flex h-9 w-9 flex-col items-center justify-center rounded-full transition-colors ${
-                picked === date ? 'bg-accent text-paper' : 'hover:bg-line/50'
-              } ${date === today && picked !== date ? 'text-accent' : ''}`}
+              aria-pressed={picked === date}
+              className={`relative flex h-11 w-full flex-col items-center justify-center rounded-xl tabular-nums transition-colors ${
+                picked === date
+                  ? 'bg-accent font-medium text-paper'
+                  : date === today
+                    ? 'font-medium text-accent hover:bg-accent-wash'
+                    : 'hover:bg-line/70'
+              }`}
             >
               {Number(date.slice(8))}
               {byDate[date] && (
                 <span
-                  className={`absolute bottom-[5px] h-1 w-1 rounded-full ${
+                  aria-hidden="true"
+                  className={`absolute bottom-[7px] h-1 w-1 rounded-full ${
                     picked === date ? 'bg-paper' : 'bg-accent'
                   }`}
                 />
@@ -69,7 +63,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
       </div>
 
       {picked && (
-        <div className="mt-6 border-t border-line pt-4">
+        <div className="mt-5 border-t border-line pt-4">
           {onPicked.length === 0 ? (
             <p className="text-sm text-mute">이 날은 비어 있어요.</p>
           ) : (
@@ -87,5 +81,34 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
         </div>
       )}
     </section>
+  );
+}
+
+function Arrow({
+  onClick,
+  label,
+  dir,
+}: {
+  onClick: () => void;
+  label: string;
+  dir: 'left' | 'right';
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-11 w-11 items-center justify-center rounded-full text-mute transition-colors hover:bg-line/70 hover:text-ink"
+    >
+      <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden="true">
+        <path
+          d={dir === 'left' ? 'M12.5 4L6.5 10l6 6' : 'M7.5 4l6 6-6 6'}
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </svg>
+    </button>
   );
 }

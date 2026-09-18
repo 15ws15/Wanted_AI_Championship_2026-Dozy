@@ -21,10 +21,10 @@ export default function HistoryView({ tasks }: { tasks: Task[] }) {
   }
 
   return (
-    <section className="mt-6 space-y-8">
+    <section className="mt-6 space-y-7">
       {groups.map(([day, items]) => (
         <div key={day}>
-          <h2 className="text-[13px] text-mute">{dayLabel(day)}</h2>
+          <h2 className="text-[13px] font-medium text-mute">{dayLabel(day)}</h2>
           <ul className="mt-3 space-y-3">
             {items.map((t) => (
               <li key={t.id} className="text-sm leading-relaxed">

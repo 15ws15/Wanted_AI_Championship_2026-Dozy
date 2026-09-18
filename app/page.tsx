@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import CalendarView from '@/components/CalendarView';
 import HistoryView from '@/components/HistoryView';
 import TaskCard from '@/components/TaskCard';
+import ViewTabs, { type View } from '@/components/ViewTabs';
 import { dueLabel } from '@/lib/date';
 import { loadTasks, saveTasks } from '@/lib/storage';
 import type { Task } from '@/types';
@@ -16,7 +17,8 @@ export default function Home() {
   const [pick, setPick] = useState<{ id: string; reason: string } | null>(null);
   const [picking, setPicking] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
-  const [view, setView] = useState<'list' | 'calendar' | 'history'>('list');
+  const [view, setView] = useState<View>('list');
+  const [showDone, setShowDone] = useState(false);
 
   useEffect(() => {
     setTasks(loadTasks());
@@ -47,13 +49,16 @@ export default function Home() {
   }
 
   const open = tasks.filter((t) => !t.completedAt);
+  const done = tasks.filter((t) => t.completedAt);
 
   async function recommend() {
     setPicking(true);
     setPickError(null);
     setPick(null);
     // API 계약은 titles: string[] 하나다. 추천 판단에 필요한 마감일은 제목 문자열에 실어 보낸다.
-    const titles = open.map((t) => (t.dueDate ? `${t.title} (마감 ${dueLabel(t.dueDate).text})` : t.title));
+    const titles = open.map((t) =>
+      t.dueDate ? `${t.title} (마감 ${dueLabel(t.dueDate).text})` : t.title,
+    );
     try {
       const res = await fetch('/api/recommend', {
         method: 'POST',
@@ -74,98 +79,112 @@ export default function Home() {
     }
   }
 
-  // Stable sort keeps insertion order within each group; done items sink.
-  const ordered = [...tasks].sort((a, b) => Number(!!a.completedAt) - Number(!!b.completedAt));
+  const card = (task: Task) => (
+    <TaskCard
+      key={task.id}
+      task={task}
+      reason={pick && pick.id === task.id && !task.completedAt ? pick.reason : null}
+      onChange={(fn) => setTasks((ts) => ts.map((t) => (t.id === task.id ? fn(t) : t)))}
+      onRemove={() => setTasks((ts) => ts.filter((t) => t.id !== task.id))}
+    />
+  );
 
   return (
-    <main className="mx-auto w-full max-w-xl px-5 pb-24 pt-12 sm:pt-20">
-      <header className="mb-10">
-        <h1 className="text-lg tracking-tight">Dozy</h1>
-        <p className="mt-1 text-sm text-mute">시작하기 어려운 일을, 지금 할 수 있는 한 가지로.</p>
+    <main className="mx-auto w-full max-w-xl px-5 pb-20 pt-12 sm:pt-20">
+      <header className="mb-9">
+        <h1 className="font-serif text-2xl tracking-tight">Dozy</h1>
+        <p className="mt-1.5 text-sm text-mute">시작하기 어려운 일을, 지금 할 수 있는 한 가지로.</p>
       </header>
 
       {view === 'list' && (
         <>
-      <form onSubmit={add} className="flex flex-wrap items-center gap-2 border-b border-line pb-3">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          maxLength={200}
-          placeholder="예: 보고서 작성"
-          className="min-w-0 flex-1 basis-full bg-transparent py-1 outline-none placeholder:text-mute/60 sm:basis-0"
-        />
-        <input
-          type="date"
-          value={due}
-          onChange={(e) => setDue(e.target.value)}
-          aria-label="마감일 (선택)"
-          className="shrink-0 bg-transparent py-1 text-[13px] text-mute outline-none"
-        />
-        <button
-          type="submit"
-          disabled={!draft.trim()}
-          className="shrink-0 px-2 text-xl text-mute transition-colors hover:text-accent disabled:opacity-30"
-          aria-label="추가"
-        >
-          +
-        </button>
-      </form>
-
-      {open.length > 0 && (
-        <div className="mt-5">
-          <button
-            onClick={recommend}
-            disabled={picking}
-            className="rounded-full border border-line px-4 py-1.5 text-[13px] text-mute transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+          <form
+            onSubmit={add}
+            className="flex flex-wrap items-center gap-2 border-b border-line-strong pb-2 focus-within:border-accent"
           >
-            {picking ? '목록을 보는 중…' : '뭐부터 할지 모르겠어요'}
-          </button>
-          {pickError && <p className="mt-2 text-[13px] text-mute">{pickError}</p>}
-        </div>
-      )}
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={200}
+              placeholder="예: 보고서 작성"
+              aria-label="할 일"
+              className="min-w-0 flex-1 basis-full bg-transparent py-2 outline-none placeholder:text-mute/60 sm:basis-0"
+            />
+            <input
+              type="date"
+              value={due}
+              onChange={(e) => setDue(e.target.value)}
+              aria-label="마감일 (선택)"
+              className="min-h-11 shrink-0 bg-transparent text-[13px] text-mute outline-none"
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim()}
+              aria-label="할 일 추가"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-mute transition-colors hover:bg-accent-wash hover:text-accent disabled:opacity-30"
+            >
+              <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden="true">
+                <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
+          </form>
 
-      {loaded && tasks.length === 0 && (
-        <p className="mt-10 text-sm leading-loose text-mute">
-          할 일을 하나 적어 보세요.
-          <br />
-          막막하면 <span className="text-ink">쪼개기</span>를 누르면 돼요.
-          <br />
-          지금 5분 안에 할 수 있는 행동 하나로 바꿔 드릴게요.
-        </p>
-      )}
+          {open.length > 0 && (
+            <div className="mt-5">
+              <button
+                onClick={recommend}
+                disabled={picking}
+                className="min-h-11 rounded-full bg-accent px-5 text-[13px] font-medium text-paper transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {picking ? '목록을 보는 중…' : '뭐부터 할지 모르겠어요'}
+              </button>
+              {pickError && (
+                <p role="status" className="mt-2 text-[13px] text-mute">
+                  {pickError}
+                </p>
+              )}
+            </div>
+          )}
 
-      <ul className="mt-4">
-        {ordered.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            reason={pick && pick.id === task.id && !task.completedAt ? pick.reason : null}
-            onChange={(fn) => setTasks((ts) => ts.map((t) => (t.id === task.id ? fn(t) : t)))}
-            onRemove={() => setTasks((ts) => ts.filter((t) => t.id !== task.id))}
-          />
-        ))}
-      </ul>
+          {loaded && tasks.length === 0 && (
+            <p className="mt-10 text-sm leading-loose text-mute">
+              할 일을 하나 적어 보세요.
+              <br />
+              막막하면 <span className="text-ink">쪼개기</span>를 누르면 돼요.
+              <br />
+              지금 5분 안에 할 수 있는 행동 하나로 바꿔 드릴게요.
+            </p>
+          )}
+
+          {open.length > 0 && (
+            <section className="mt-8">
+              <h2 className="text-[13px] text-mute">
+                남은 일 <span className="tabular-nums text-ink">{open.length}</span>
+              </h2>
+              <ul className="mt-1 divide-y divide-line">{open.map(card)}</ul>
+            </section>
+          )}
+
+          {done.length > 0 && (
+            <section className="mt-9">
+              <button
+                onClick={() => setShowDone((v) => !v)}
+                aria-expanded={showDone}
+                className="min-h-11 text-[13px] text-mute transition-colors hover:text-ink"
+              >
+                끝낸 일 <span className="tabular-nums">{done.length}</span>
+                <span aria-hidden="true">{showDone ? ' ⌃' : ' ⌄'}</span>
+              </button>
+              {showDone && <ul className="divide-y divide-line">{done.map(card)}</ul>}
+            </section>
+          )}
         </>
       )}
 
       {view === 'calendar' && <CalendarView tasks={tasks} />}
       {view === 'history' && <HistoryView tasks={tasks} />}
 
-      <nav className="mt-12 flex gap-5 border-t border-line pt-4 text-[13px]">
-        {([
-          ['list', '오늘 할 일'],
-          ['calendar', '달력'],
-          ['history', '지난 기록'],
-        ] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setView(key)}
-            className={`transition-colors ${view === key ? 'text-ink' : 'text-mute hover:text-ink'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+      <ViewTabs view={view} onChange={setView} />
     </main>
   );
 }
