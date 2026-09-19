@@ -104,9 +104,11 @@ export default function Home() {
 
       {view === 'list' && (
         <>
+          <CalendarView tasks={tasks} />
+
           <form
             onSubmit={add}
-            className="flex flex-wrap items-center gap-2 border-b border-line-strong pb-2 focus-within:border-accent"
+            className="mt-8 flex flex-wrap items-center gap-2 border-b border-line-strong pb-2 focus-within:border-accent"
           >
             <input
               value={draft}
@@ -177,7 +179,6 @@ export default function Home() {
         </>
       )}
 
-      {view === 'calendar' && <CalendarView tasks={tasks} />}
       {view === 'history' && <HistoryView tasks={tasks} />}
 
       <ViewTabs view={view} onChange={setView} />

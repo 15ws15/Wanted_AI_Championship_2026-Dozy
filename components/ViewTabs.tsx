@@ -1,10 +1,9 @@
 'use client';
 
-export type View = 'list' | 'calendar' | 'history';
+export type View = 'list' | 'history';
 
 const TABS: [View, string][] = [
   ['list', '오늘 할 일'],
-  ['calendar', '달력'],
   ['history', '지난 기록'],
 ];
 

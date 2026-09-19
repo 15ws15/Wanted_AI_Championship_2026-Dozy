@@ -40,8 +40,12 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
     ? (finished[picked] ?? []).filter((t) => planDay(t) !== picked)
     : [];
 
+  // 오늘을 고른 상태에서는 상세를 접는다. 바로 아래 목록이 같은 내용을
+  // 이미 보여주고 있어서, 펼쳐두면 같은 말을 두 번 하는 셈이 된다.
+  const showDetail = !!picked && picked !== today;
+
   return (
-    <section className="mt-6">
+    <section>
       <header className="flex items-center justify-between">
         <IconButton onClick={() => setMonth(shiftMonth(month, -1))} label="이전 달">
           <ChevronIcon dir="left" />
@@ -117,8 +121,14 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
         })}
       </div>
 
-      {picked && (
-        <div className="mt-5 border-t border-line pt-4">
+      {picked === today && progressOn(today).total > 0 && (
+        <div className="mt-3 text-center">
+          <DayProgressNote {...progressOn(today)} />
+        </div>
+      )}
+
+      {showDetail && (
+        <div className="mt-4 border-t border-line pt-4">
           {pickedPlan.length === 0 && pickedDone.length === 0 ? (
             <p className="text-sm text-mute">이 날은 비어 있어요.</p>
           ) : (
@@ -138,7 +148,9 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
 function DayProgressNote({ total, done }: { total: number; done: number }) {
   return (
     <p className={`text-[13px] ${done === total ? 'text-accent' : 'text-mute'}`}>
-      {done === total ? '계획한 일을 모두 끝낸 날이에요.' : `마감 ${total}개 중 ${done}개 끝냈어요.`}
+      {done === total
+        ? '계획한 일을 모두 끝낸 날이에요.'
+        : `하려던 일 ${total}개 중 ${done}개 끝냈어요.`}
     </p>
   );
 }
