@@ -1,10 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 
 const MODEL = 'gemini-3.5-flash-lite';
-// 처음 정한 값은 10초였지만 무료 티어 실측이 7.7~11.8초다 (13토큰 프롬프트도 11.8초로,
-// 느린 원인은 우리 프롬프트가 아니라 공급자 지연이다). 10초면 절반이 헛되이 끊긴다.
-// Vercel Hobby 함수 한도는 300초라 배포 쪽 제약은 아니다.
-const TIMEOUT_MS = 25_000;
+// Gemini primary has a bounded wait so the HyperCLOVA ZeroGPU backup can run.
+const TIMEOUT_MS = 10_000;
 
 class TimeoutError extends Error {}
 
@@ -65,7 +63,8 @@ export function oneLine(raw: string): string {
 }
 
 export function llmError(e: unknown): Response {
-  console.error('[llm]', e);
+  // Do not put an upstream request, key, or provider error body into logs.
+  console.error('[llm]', e instanceof Error ? e.name : 'unknown-error');
 
   if (e instanceof TimeoutError) {
     return Response.json({ error: '응답이 좀 늦네요. 다시 눌러 주세요.' }, { status: 504 });

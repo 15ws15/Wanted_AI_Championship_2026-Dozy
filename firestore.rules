@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // A deliberate single shared board. Anonymous Auth has no visible login UI,
+    // but still blocks unauthenticated SDK calls and lets App Check be enforced.
+    match /shared/public/tasks/{taskId} {
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function validTimestamp(value) {
+        return value == null || (value is string && value.size() <= 40);
+      }
+
+      function validStep(step) {
+        return step is map
+          && step.keys().hasOnly(['id', 'text', 'depth', 'completedAt'])
+          && step.keys().hasAll(['id', 'text', 'depth', 'completedAt'])
+          && step.id is string && step.id.size() > 0 && step.id.size() <= 128
+          && step.text is string && step.text.size() > 0 && step.text.size() <= 200
+          && step.depth is int && step.depth >= 0 && step.depth <= 3
+          && validTimestamp(step.completedAt);
+      }
+
+      function validSteps(steps) {
+        return steps is list
+          && steps.size() <= 4
+          && (steps.size() < 1 || validStep(steps[0]))
+          && (steps.size() < 2 || validStep(steps[1]))
+          && (steps.size() < 3 || validStep(steps[2]))
+          && (steps.size() < 4 || validStep(steps[3]));
+      }
+
+      function validTask(data) {
+        return data.keys().hasOnly(['id', 'title', 'createdAt', 'dueDate', 'completedAt', 'note', 'steps'])
+          && data.keys().hasAll(['id', 'title', 'createdAt', 'dueDate', 'completedAt', 'note', 'steps'])
+          && data.id == taskId
+          && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+          && data.createdAt is string && data.createdAt.size() > 0 && data.createdAt.size() <= 40
+          && (data.dueDate == null || (data.dueDate is string && data.dueDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+          && validTimestamp(data.completedAt)
+          && (data.note == null || (data.note is string && data.note.size() <= 500))
+          && validSteps(data.steps);
+      }
+
+      allow read: if signedIn();
+      allow create: if signedIn() && validTask(request.resource.data);
+      allow update: if signedIn()
+        && validTask(request.resource.data)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if signedIn();
+    }
+  }
+}
