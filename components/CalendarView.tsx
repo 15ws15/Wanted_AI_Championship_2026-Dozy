@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import IconButton from '@/components/IconButton';
 import { ChevronIcon } from '@/components/icons';
-import { isDayCleared, monthCells, monthLabel, shiftMonth, thisMonth, todayStr } from '@/lib/date';
+import { dayProgress, monthCells, monthLabel, shiftMonth, thisMonth, todayStr } from '@/lib/date';
 import type { Task } from '@/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -21,8 +21,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
     if (t.completedAt) (finished[t.completedAt.slice(0, 10)] ??= []).push(t);
   }
 
-  const cleared = (date: string) => isDayCleared(byDue[date]);
-  const pendingOn = (date: string) => (byDue[date] ?? []).filter((t) => !t.completedAt);
+  const progressOn = (date: string) => dayProgress(byDue[date]);
 
   const today = todayStr();
   // 데이터가 없는 날짜를 눌러도 빈 배열을 받는다. 여기서 깨지면 안 된다.
@@ -54,7 +53,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
         {monthCells(month).map((date, i) => {
           if (date === null) return <div key={`pad-${i}`} />;
           const isPicked = picked === date;
-          const allDone = cleared(date);
+          const { total, done, ratio } = progressOn(date);
           const [, m, d] = date.split('-');
 
           return (
@@ -62,23 +61,34 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
               key={date}
               onClick={() => setPicked(date)}
               aria-pressed={isPicked}
-              // 배경색만으로 뜻을 전하지 않는다. 읽어주는 도구에는 말로 전한다.
-              aria-label={`${Number(m)}월 ${Number(d)}일${allDone ? ', 계획한 일을 모두 끝낸 날' : ''}`}
-              className={`relative flex h-11 w-full items-center justify-center rounded-xl tabular-nums transition-colors ${
+              // 차오른 높이만으로 뜻을 전하지 않는다. 읽어주는 도구에는 말로 전한다.
+              aria-label={`${Number(m)}월 ${Number(d)}일${
+                total > 0 ? `, 마감 ${total}개 중 ${done}개 끝냄` : ''
+              }`}
+              className={`relative flex h-11 w-full items-center justify-center overflow-hidden rounded-xl tabular-nums transition-colors ${
                 isPicked
                   ? 'bg-accent font-medium text-paper'
-                  : allDone
-                    ? `bg-done-wash ${date === today ? 'font-medium text-accent' : ''}`
-                    : date === today
-                      ? 'font-medium text-accent hover:bg-accent-wash'
-                      : 'hover:bg-line/70'
+                  : date === today
+                    ? 'font-medium text-accent hover:bg-accent-wash'
+                    : 'hover:bg-line/70'
               }`}
             >
-              <span className="-translate-y-[3px]">{Number(d)}</span>
+              {/* 끝낸 비율만큼 아래에서 차오른다. 덜 찬 날에도 같은 색을 쓴다 —
+                  낮은 비율에 경고색을 주면 달력이 못 한 날을 세는 판이 된다. */}
+              {!isPicked && ratio > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 bottom-0 bg-done-wash transition-[height]"
+                  style={{ height: `${ratio * 100}%` }}
+                />
+              )}
+
+              <span className="relative -translate-y-[3px]">{Number(d)}</span>
+
               {/* 점은 "여기 뭔가 있다"는 표시일 뿐이다. 마감인지 끝낸 일인지는
-                  아래 목록이 글자로 말한다 — 색만으로 뜻을 전달하지 않는다. */}
+                  아래 목록이 글자로 말한다. */}
               <span className="absolute bottom-[6px] flex gap-[3px]">
-                {pendingOn(date).length > 0 && (
+                {done < total && (
                   <span
                     aria-hidden="true"
                     className={`h-1 w-1 rounded-full ${isPicked ? 'bg-paper' : 'bg-accent'}`}
@@ -104,9 +114,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
             <p className="text-sm text-mute">이 날은 비어 있어요.</p>
           ) : (
             <div className="space-y-5">
-              {cleared(picked) && (
-                <p className="text-[13px] text-accent">계획한 일을 모두 끝낸 날이에요.</p>
-              )}
+              {progressOn(picked).total > 0 && <DayProgressNote {...progressOn(picked)} />}
               <DayGroup label="마감" items={pickedDue} />
               <DayGroup label="끝냄" items={pickedDone} />
             </div>
@@ -114,6 +122,15 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
         </div>
       )}
     </section>
+  );
+}
+
+/** 숫자는 사실만 적는다. 퍼센트나 점수로 바꾸지 않는다. */
+function DayProgressNote({ total, done }: { total: number; done: number }) {
+  return (
+    <p className={`text-[13px] ${done === total ? 'text-accent' : 'text-mute'}`}>
+      {done === total ? '계획한 일을 모두 끝낸 날이에요.' : `마감 ${total}개 중 ${done}개 끝냈어요.`}
+    </p>
   );
 }
 

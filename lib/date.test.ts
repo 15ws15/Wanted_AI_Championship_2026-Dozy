@@ -4,7 +4,7 @@ import {
   dayLabel,
   dueLabel,
   groupByDay,
-  isDayCleared,
+  dayProgress,
   monthCells,
   monthLabel,
   shiftMonth,
@@ -86,16 +86,24 @@ const unsorted: C[] = [
 ];
 assert.strictEqual(groupByDay(unsorted, (t) => t.at.slice(0, 10)).length, 3);
 
-// --- 계획한 일을 다 끝낸 날 ---
+// --- 그 날 마감인 일의 진행 정도 ---
 const at = '2026-09-19T10:00:00.000Z';
-// 마감이 하나도 없는 날은 완료가 아니다. every는 빈 배열에 true를 주므로
-// 이 가드가 빠지면 달력의 빈 날이 전부 완료로 칠해진다.
-assert.strictEqual(isDayCleared(undefined), false);
-assert.strictEqual(isDayCleared([]), false);
 
-assert.strictEqual(isDayCleared([{ completedAt: at }]), true);
-assert.strictEqual(isDayCleared([{ completedAt: at }, { completedAt: at }]), true);
-assert.strictEqual(isDayCleared([{ completedAt: at }, { completedAt: null }]), false);
-assert.strictEqual(isDayCleared([{ completedAt: null }]), false);
+// 마감이 하나도 없는 날은 채울 것이 없다. every는 빈 배열에 true를 주므로
+// 이 경우를 따로 보지 않으면 달력의 빈 날이 전부 가득 찬 것으로 칠해진다.
+assert.deepStrictEqual(dayProgress(undefined), { total: 0, done: 0, ratio: 0 });
+assert.deepStrictEqual(dayProgress([]), { total: 0, done: 0, ratio: 0 });
+
+assert.deepStrictEqual(dayProgress([{ completedAt: at }]), { total: 1, done: 1, ratio: 1 });
+assert.deepStrictEqual(dayProgress([{ completedAt: null }]), { total: 1, done: 0, ratio: 0 });
+
+// 4개 중 2개 → 절반
+const four = [{ completedAt: at }, { completedAt: at }, { completedAt: null }, { completedAt: null }];
+assert.deepStrictEqual(dayProgress(four), { total: 4, done: 2, ratio: 0.5 });
+
+// 나누어떨어지지 않아도 0과 1 사이에 머문다
+const third = dayProgress([{ completedAt: at }, { completedAt: null }, { completedAt: null }]);
+assert.ok(third.ratio > 0 && third.ratio < 1);
+assert.strictEqual(Math.round(third.ratio * 100), 33);
 
 console.log('date.ts ok');

@@ -81,10 +81,18 @@ export function groupByDay<T>(items: T[], dayOf: (t: T) => string): [string, T[]
 }
 
 /**
- * 그 날 마감인 일이 있었고, 하나도 남지 않았는가.
- * 빈 배열에 every는 true를 돌려주므로 "계획이 있었는지"를 먼저 본다.
- * 이 가드가 없으면 마감이 하나도 없는 날까지 전부 완료로 표시된다.
+ * 그 날 마감인 일 중 몇 개가 끝났는가. 달력 칸이 차오르는 높이가 된다.
+ * total이 0이면 계획이 없던 날이다 — 채울 것도, 못 채운 것도 없다.
+ *
+ * 빈 배열에 every는 true를 돌려주므로 "계획이 있었는지"를 먼저 봐야 한다.
+ * 그 가드가 없으면 마감이 하나도 없는 날까지 전부 완료로 칠해진다.
  */
-export function isDayCleared(planned: { completedAt: string | null }[] | undefined): boolean {
-  return !!planned?.length && planned.every((t) => t.completedAt !== null);
+export function dayProgress(planned: { completedAt: string | null }[] | undefined): {
+  total: number;
+  done: number;
+  ratio: number;
+} {
+  const total = planned?.length ?? 0;
+  const done = planned?.filter((t) => t.completedAt !== null).length ?? 0;
+  return { total, done, ratio: total === 0 ? 0 : done / total };
 }
