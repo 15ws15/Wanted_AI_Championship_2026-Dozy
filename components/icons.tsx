@@ -44,13 +44,6 @@ export const PencilIcon = (p: Props) => (
   </Svg>
 );
 
-export const NoteIcon = (p: Props) => (
-  <Svg {...p}>
-    <path d="M5 3.5h7L15.5 7v9.5h-11z" {...stroke} />
-    <path d="M11.5 3.5V7H15" {...stroke} />
-  </Svg>
-);
-
 export const ChevronIcon = ({ dir, ...p }: Props & { dir: 'left' | 'right' }) => (
   <Svg {...p}>
     <path d={dir === 'left' ? 'M12.5 4L6.5 10l6 6' : 'M7.5 4l6 6-6 6'} {...stroke} />

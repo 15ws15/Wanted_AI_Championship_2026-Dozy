@@ -3,7 +3,8 @@
 import Check from '@/components/Check';
 import IconButton from '@/components/IconButton';
 import StepLadder from '@/components/StepLadder';
-import { NoteIcon, PencilIcon, XIcon } from '@/components/icons';
+import TaskNote from '@/components/TaskNote';
+import { PencilIcon, XIcon } from '@/components/icons';
 import type { Task } from '@/types';
 
 type Props = {
@@ -54,12 +55,7 @@ export default function TaskCard({ task, reason, onChange, onRemove, onEdit }: P
       </div>
 
       {/* 적을 수만 있고 볼 수 없으면 메모가 아니다. 제목 아래에 조용히 둔다. */}
-      {task.note && (
-        <p className="flex gap-1.5 pb-2 pl-11 text-[13px] leading-relaxed text-mute">
-          <NoteIcon className="mt-[3px] h-3.5 w-3.5 shrink-0" />
-          <span className="whitespace-pre-wrap">{task.note}</span>
-        </p>
-      )}
+      {task.note && <TaskNote text={task.note} />}
 
       <StepLadder task={task} done={done} onChange={onChange} />
     </li>
