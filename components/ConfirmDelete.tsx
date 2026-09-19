@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import Modal from '@/components/Modal';
 import type { Task } from '@/types';
 
 /**
  * 할 일 삭제는 되돌릴 수 없고 쪼개 둔 행동까지 같이 사라지므로 한 번 묻는다.
  * 쪼갠 행동 하나를 지우는 것은 다시 받으면 그만이라 묻지 않는다.
- *
- * 가운데 정렬을 직접 잡는 이유는 Tailwind preflight가 모든 요소의 margin을 0으로
- * 만들어, dialog를 가운데 세우던 margin:auto가 지워지기 때문이다.
  */
 export default function ConfirmDelete({
   task,
@@ -19,26 +16,12 @@ export default function ConfirmDelete({
   onConfirm: () => void;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (!task) {
-      if (el.open) el.close();
-    } else if (!el.open) {
-      // 이미 열린 dialog에 showModal을 부르면 예외가 난다.
-      el.showModal();
-    }
-  }, [task]);
-
   return (
-    <dialog
-      ref={ref}
+    <Modal
+      open={!!task}
       onClose={onClose}
-      aria-labelledby="confirm-title"
-      style={{ left: '50%', top: '50%', margin: 0, transform: 'translate(-50%, -50%)' }}
-      className="fixed w-[min(92vw,26rem)] rounded-2xl border border-line bg-paper p-0 text-ink backdrop:bg-ink/40"
+      labelledBy="confirm-title"
+      className="w-[min(92vw,26rem)]"
     >
       <div className="px-6 pb-5 pt-6">
         <h2 id="confirm-title" className="text-[15px] font-medium">
@@ -69,6 +52,6 @@ export default function ConfirmDelete({
           삭제하기
         </button>
       </footer>
-    </dialog>
+    </Modal>
   );
 }
