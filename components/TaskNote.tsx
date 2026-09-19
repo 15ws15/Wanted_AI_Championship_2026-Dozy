@@ -26,10 +26,11 @@ export default function TaskNote({ text }: { text: string }) {
   }, [text, expanded]);
 
   return (
-    <div className="pl-11">
+    // 오른쪽 여백은 삭제 버튼 너비다. 이만큼 비워야 더보기가 연필 아이콘 아래에 선다.
+    <div className="flex items-start gap-2 pl-11 pr-11">
       <p
         ref={ref}
-        className={`whitespace-pre-wrap text-[13px] leading-relaxed text-mute ${
+        className={`min-w-0 flex-1 whitespace-pre-wrap text-[13px] leading-relaxed text-mute ${
           expanded ? '' : 'line-clamp-2'
         }`}
       >
@@ -39,7 +40,7 @@ export default function TaskNote({ text }: { text: string }) {
         <button
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="min-h-11 text-[13px] text-mute underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent"
+          className="min-h-11 shrink-0 px-2 text-[13px] text-mute underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent"
         >
           {expanded ? '접기' : '더보기'}
         </button>
