@@ -1,6 +1,7 @@
 import { badTitle, fail, rateLimited } from '@/lib/api';
 import { ask, llmError, oneLine } from '@/lib/llm';
 import { BREAKDOWN_MORE_SYSTEM, breakdownMoreInput } from '@/lib/prompts';
+import { askZeroGpu } from '@/lib/zero-gpu';
 
 // LLM 응답을 기다리는 함수다. 프로젝트 기본값이 낮게 잡혀도 끊기지 않도록 명시한다.
 export const maxDuration = 30;
@@ -13,7 +14,11 @@ export async function POST(req: Request) {
 
   try {
     return Response.json({ step: oneLine(await ask(BREAKDOWN_MORE_SYSTEM, breakdownMoreInput(title, previousStep))) });
-  } catch (e) {
-    return llmError(e);
+  } catch (geminiError) {
+    try {
+      return Response.json({ step: oneLine(await askZeroGpu(title, previousStep)) });
+    } catch {
+      return llmError(geminiError);
+    }
   }
 }
