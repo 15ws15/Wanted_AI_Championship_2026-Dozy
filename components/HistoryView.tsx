@@ -1,6 +1,6 @@
 'use client';
 
-import { dayLabel, groupByDay } from '@/lib/date';
+import { dayLabel, groupByDay, localDay } from '@/lib/date';
 import type { Task } from '@/types';
 
 export default function HistoryView({ tasks }: { tasks: Task[] }) {
@@ -8,7 +8,8 @@ export default function HistoryView({ tasks }: { tasks: Task[] }) {
     .filter((t) => t.completedAt)
     .sort((a, b) => (a.completedAt! < b.completedAt! ? 1 : -1));
 
-  const groups = groupByDay(done, (t) => t.completedAt!.slice(0, 10));
+  // UTC 문자열을 그냥 자르면 새벽에 끝낸 일이 전날 묶음으로 간다.
+  const groups = groupByDay(done, (t) => localDay(t.completedAt!));
 
   if (groups.length === 0) {
     return (

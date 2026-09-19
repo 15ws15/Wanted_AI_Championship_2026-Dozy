@@ -3,7 +3,16 @@
 import { useState } from 'react';
 import IconButton from '@/components/IconButton';
 import { ChevronIcon } from '@/components/icons';
-import { dayProgress, monthCells, monthLabel, shiftMonth, thisMonth, todayStr } from '@/lib/date';
+import {
+  dayProgress,
+  localDay,
+  monthCells,
+  monthLabel,
+  planDay,
+  shiftMonth,
+  thisMonth,
+  todayStr,
+} from '@/lib/date';
 import type { Task } from '@/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -12,23 +21,23 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
   const [month, setMonth] = useState(thisMonth());
   const [picked, setPicked] = useState<string | null>(todayStr());
 
-  // 마감일은 선택 입력이라 대다수 할 일이 dueDate 없이 쌓인다. 마감만 찍으면
-  // 달력이 계속 비어 있게 되므로 끝낸 날도 함께 찍는다.
-  const byDue: Record<string, Task[]> = {};
+  // 마감일이 없는 할 일도 만든 날의 계획으로 잡는다. 마감일은 선택 입력이라
+  // 대다수가 날짜 없이 쌓이는데, 그것들을 빼면 달력이 실제로 한 일을 반영하지 못한다.
+  const planned: Record<string, Task[]> = {};
   const finished: Record<string, Task[]> = {};
   for (const t of tasks) {
-    if (t.dueDate) (byDue[t.dueDate] ??= []).push(t);
-    if (t.completedAt) (finished[t.completedAt.slice(0, 10)] ??= []).push(t);
+    (planned[planDay(t)] ??= []).push(t);
+    if (t.completedAt) (finished[localDay(t.completedAt)] ??= []).push(t);
   }
 
-  const progressOn = (date: string) => dayProgress(byDue[date]);
+  const progressOn = (date: string) => dayProgress(planned[date]);
 
   const today = todayStr();
   // 데이터가 없는 날짜를 눌러도 빈 배열을 받는다. 여기서 깨지면 안 된다.
-  const pickedDue = picked ? (byDue[picked] ?? []) : [];
-  // 마감일이 그 날인 것은 위에서 이미 보여주므로 여기서는 뺀다. 한 번만 나오게 한다.
+  const pickedPlan = picked ? (planned[picked] ?? []) : [];
+  // 그 날 계획이었던 것은 위에 이미 나오므로 뺀다. 한 번만 보이게 한다.
   const pickedDone = picked
-    ? (finished[picked] ?? []).filter((t) => t.dueDate !== picked)
+    ? (finished[picked] ?? []).filter((t) => planDay(t) !== picked)
     : [];
 
   return (
@@ -63,7 +72,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
               aria-pressed={isPicked}
               // 차오른 높이만으로 뜻을 전하지 않는다. 읽어주는 도구에는 말로 전한다.
               aria-label={`${Number(m)}월 ${Number(d)}일${
-                total > 0 ? `, 마감 ${total}개 중 ${done}개 끝냄` : ''
+                total > 0 ? `, 하려던 일 ${total}개 중 ${done}개 끝냄` : ''
               }`}
               className={`relative flex h-11 w-full items-center justify-center overflow-hidden rounded-xl tabular-nums transition-colors ${
                 isPicked
@@ -110,13 +119,13 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
 
       {picked && (
         <div className="mt-5 border-t border-line pt-4">
-          {pickedDue.length === 0 && pickedDone.length === 0 ? (
+          {pickedPlan.length === 0 && pickedDone.length === 0 ? (
             <p className="text-sm text-mute">이 날은 비어 있어요.</p>
           ) : (
             <div className="space-y-5">
               {progressOn(picked).total > 0 && <DayProgressNote {...progressOn(picked)} />}
-              <DayGroup label="마감" items={pickedDue} />
-              <DayGroup label="끝냄" items={pickedDone} />
+              <DayGroup label="이 날 하려던 일" items={pickedPlan} />
+              <DayGroup label="이 날 끝낸 다른 일" items={pickedDone} />
             </div>
           )}
         </div>

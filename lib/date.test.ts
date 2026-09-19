@@ -5,6 +5,8 @@ import {
   dueLabel,
   groupByDay,
   dayProgress,
+  localDay,
+  planDay,
   monthCells,
   monthLabel,
   shiftMonth,
@@ -105,5 +107,25 @@ assert.deepStrictEqual(dayProgress(four), { total: 4, done: 2, ratio: 0.5 });
 const third = dayProgress([{ completedAt: at }, { completedAt: null }, { completedAt: null }]);
 assert.ok(third.ratio > 0 && third.ratio < 1);
 assert.strictEqual(Math.round(third.ratio * 100), 33);
+
+// --- 로컬 날짜 변환 ---
+// UTC 문자열을 그냥 자르면 한국 시간 새벽에 끝낸 일이 전날로 간다.
+// 이 검사는 실행 환경의 시간대를 따르므로, 자정 근처 시각을 로컬로 되짚어 맞춘다.
+const midnightish = new Date(2026, 8, 19, 0, 30);        // 로컬 9/19 00:30
+assert.strictEqual(localDay(midnightish.toISOString()), '2026-09-19');
+const lateNight = new Date(2026, 8, 19, 23, 30);         // 로컬 9/19 23:30
+assert.strictEqual(localDay(lateNight.toISOString()), '2026-09-19');
+// 로컬로 만든 시각은 몇 시든 그 날짜로 돌아와야 한다
+for (const h of [0, 1, 8, 12, 18, 23]) {
+  const d = new Date(2026, 0, 31, h, 0);
+  assert.strictEqual(localDay(d.toISOString()), '2026-01-31', `${h}시에서 날짜가 밀렸다`);
+}
+
+// --- 어느 날의 계획인가 ---
+const made = new Date(2026, 8, 19, 9, 0).toISOString();
+// 마감일을 적었으면 그 날
+assert.strictEqual(planDay({ dueDate: '2026-09-25', createdAt: made }), '2026-09-25');
+// 안 적었으면 만든 날 (첫 화면이 "오늘 할 일"이므로)
+assert.strictEqual(planDay({ dueDate: null, createdAt: made }), '2026-09-19');
 
 console.log('date.ts ok');

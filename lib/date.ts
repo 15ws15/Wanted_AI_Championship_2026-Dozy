@@ -96,3 +96,24 @@ export function dayProgress(planned: { completedAt: string | null }[] | undefine
   const done = planned?.filter((t) => t.completedAt !== null).length ?? 0;
   return { total, done, ratio: total === 0 ? 0 : done / total };
 }
+
+/**
+ * ISO 시각을 사용자 로컬 기준 YYYY-MM-DD로 바꾼다.
+ * toISOString()은 UTC라 문자열을 그냥 잘라 쓰면 한국 시간 새벽에 끝낸 일이
+ * 전날로 기록된다. 저장은 ISO로 하되 날짜로 묶을 때는 반드시 이걸 거친다.
+ */
+export function localDay(iso: string): string {
+  return ymd(new Date(iso));
+}
+
+/**
+ * 그 할 일이 어느 날의 계획이었는가.
+ * 마감일을 적었으면 그 날, 안 적었으면 만든 날이다 — 첫 화면이 "오늘 할 일"이므로
+ * 날짜 없이 적은 것은 그 날 하려던 일로 본다.
+ *
+ * 완료한 날이 아니라 계획한 날에 묶는 이유는 칸이 흔들리지 않게 하기 위해서다.
+ * 완료일 기준이면 묵혀둔 일을 끝낼 때마다 지난 칸들이 다시 그려진다.
+ */
+export function planDay(task: { dueDate: string | null; createdAt: string }): string {
+  return task.dueDate ?? localDay(task.createdAt);
+}
