@@ -4,9 +4,7 @@ import { useEffect, useState } from 'react';
 import CalendarView from '@/components/CalendarView';
 import EmptyState from '@/components/EmptyState';
 import { PlusIcon } from '@/components/icons';
-import HistoryView from '@/components/HistoryView';
 import TaskCard from '@/components/TaskCard';
-import ViewTabs, { type View } from '@/components/ViewTabs';
 import { dueLabel } from '@/lib/date';
 import { loadTasks, saveTasks } from '@/lib/storage';
 import type { Task } from '@/types';
@@ -19,7 +17,6 @@ export default function Home() {
   const [pick, setPick] = useState<{ id: string; reason: string } | null>(null);
   const [picking, setPicking] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
-  const [view, setView] = useState<View>('list');
   const [showDone, setShowDone] = useState(false);
 
   useEffect(() => {
@@ -102,9 +99,7 @@ export default function Home() {
         <p className="mt-1.5 text-sm text-mute">시작하기 어려운 일을, 지금 할 수 있는 한 가지로.</p>
       </header>
 
-      {view === 'list' && (
-        <>
-          <CalendarView tasks={tasks} />
+      <CalendarView tasks={tasks} />
 
           <form
             onSubmit={add}
@@ -176,12 +171,6 @@ export default function Home() {
               {showDone && <ul className="divide-y divide-line">{done.map(card)}</ul>}
             </section>
           )}
-        </>
-      )}
-
-      {view === 'history' && <HistoryView tasks={tasks} />}
-
-      <ViewTabs view={view} onChange={setView} />
     </main>
   );
 }

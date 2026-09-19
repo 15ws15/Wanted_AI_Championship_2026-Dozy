@@ -4,6 +4,7 @@ import { useState } from 'react';
 import IconButton from '@/components/IconButton';
 import { ChevronIcon } from '@/components/icons';
 import {
+  dayLabel,
   dayProgress,
   localDay,
   monthCells,
@@ -129,6 +130,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
 
       {showDetail && (
         <div className="mt-4 border-t border-line pt-4">
+          <h3 className="mb-3 text-[13px] font-medium">{dayLabel(picked)}</h3>
           {pickedPlan.length === 0 && pickedDone.length === 0 ? (
             <p className="text-sm text-mute">이 날은 비어 있어요.</p>
           ) : (
@@ -159,7 +161,7 @@ function DayGroup({ label, items }: { label: string; items: Task[] }) {
   if (items.length === 0) return null;
   return (
     <div>
-      <h3 className="text-[13px] text-mute">{label}</h3>
+      <h4 className="text-[13px] text-mute">{label}</h4>
       <ul className="mt-2 space-y-2">
         {items.map((t) => (
           <li

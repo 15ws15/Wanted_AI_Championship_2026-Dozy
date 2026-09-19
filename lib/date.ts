@@ -66,26 +66,11 @@ export function dayLabel(dateStr: string): string {
 }
 
 /**
- * 같은 날짜끼리 이어 묶는다. 입력이 최신순이면 결과도 최신순이다.
- * 날짜를 키로 모으지 않고 인접한 것만 묶는 이유는 정렬 순서를 그대로 보존하기 위해서다.
- */
-export function groupByDay<T>(items: T[], dayOf: (t: T) => string): [string, T[]][] {
-  const groups: [string, T[]][] = [];
-  for (const item of items) {
-    const day = dayOf(item);
-    const last = groups[groups.length - 1];
-    if (last && last[0] === day) last[1].push(item);
-    else groups.push([day, [item]]);
-  }
-  return groups;
-}
-
-/**
- * 그 날 마감인 일 중 몇 개가 끝났는가. 달력 칸이 차오르는 높이가 된다.
+ * 그 날 계획이었던 일 중 몇 개가 끝났는가. 달력 칸이 차오르는 높이가 된다.
  * total이 0이면 계획이 없던 날이다 — 채울 것도, 못 채운 것도 없다.
  *
  * 빈 배열에 every는 true를 돌려주므로 "계획이 있었는지"를 먼저 봐야 한다.
- * 그 가드가 없으면 마감이 하나도 없는 날까지 전부 완료로 칠해진다.
+ * 그 가드가 없으면 계획이 하나도 없는 날까지 전부 가득 찬 것으로 칠해진다.
  */
 export function dayProgress(planned: { completedAt: string | null }[] | undefined): {
   total: number;
