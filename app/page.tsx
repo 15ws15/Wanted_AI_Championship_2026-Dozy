@@ -95,7 +95,12 @@ export default function Home() {
     <main className="mx-auto w-full max-w-xl px-5 pb-20 pt-12 sm:pt-20 lg:max-w-5xl">
       <header className="mb-9">
         <h1 className="font-serif text-2xl tracking-tight">Dozy</h1>
-        <p className="mt-1.5 text-sm text-mute">시작하기 어려운 일을, 지금 할 수 있는 한 가지로.</p>
+        <p className="mt-1.5 text-sm text-mute">
+          시작하기 어려운 일을, 지금 할 수 있는 한 가지로.
+          {/* 제목과 같은 세리프로 적어 이름의 유래(Do + easy)가 드러나게 한다.
+              색을 흐리면 대비가 4.5:1 아래로 떨어져서, 구분은 서체에만 맡긴다. */}
+          <span className="ml-2 whitespace-nowrap font-serif">Do easy.</span>
+        </p>
       </header>
 
       {loaded && (
