@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import CalendarView from '@/components/CalendarView';
 import ConfirmDelete from '@/components/ConfirmDelete';
@@ -108,7 +109,16 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-xl px-5 pb-20 pt-12 sm:pt-20 lg:max-w-5xl">
       <header className="mb-9">
-        <h1 className="font-serif text-2xl tracking-tight">Dozy</h1>
+        <h1>
+          <Image
+            src="/dozy-logo.png"
+            alt="Dozy"
+            width={1983}
+            height={793}
+            priority
+            className="h-11 w-auto"
+          />
+        </h1>
         <p className="mt-1.5 text-sm text-mute">
           시작하기 어려운 일을, 지금 할 수 있는 한 가지로.
           {/* 제목과 같은 세리프로 적어 이름의 유래(Do + easy)가 드러나게 한다.
