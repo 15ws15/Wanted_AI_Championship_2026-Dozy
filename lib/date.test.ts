@@ -1,6 +1,15 @@
 // node lib/date.test.ts
 import assert from 'node:assert';
-import { dayLabel, dueLabel, groupByDay, monthCells, monthLabel, shiftMonth, todayStr } from './date.ts';
+import {
+  dayLabel,
+  dueLabel,
+  groupByDay,
+  isDayCleared,
+  monthCells,
+  monthLabel,
+  shiftMonth,
+  todayStr,
+} from './date.ts';
 
 const shift = (n: number) => {
   const d = new Date();
@@ -76,5 +85,17 @@ const unsorted: C[] = [
   { id: 'z', at: '2026-09-18T02:00:00.000Z' },
 ];
 assert.strictEqual(groupByDay(unsorted, (t) => t.at.slice(0, 10)).length, 3);
+
+// --- 계획한 일을 다 끝낸 날 ---
+const at = '2026-09-19T10:00:00.000Z';
+// 마감이 하나도 없는 날은 완료가 아니다. every는 빈 배열에 true를 주므로
+// 이 가드가 빠지면 달력의 빈 날이 전부 완료로 칠해진다.
+assert.strictEqual(isDayCleared(undefined), false);
+assert.strictEqual(isDayCleared([]), false);
+
+assert.strictEqual(isDayCleared([{ completedAt: at }]), true);
+assert.strictEqual(isDayCleared([{ completedAt: at }, { completedAt: at }]), true);
+assert.strictEqual(isDayCleared([{ completedAt: at }, { completedAt: null }]), false);
+assert.strictEqual(isDayCleared([{ completedAt: null }]), false);
 
 console.log('date.ts ok');

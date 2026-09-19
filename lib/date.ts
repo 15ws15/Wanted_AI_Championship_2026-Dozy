@@ -79,3 +79,12 @@ export function groupByDay<T>(items: T[], dayOf: (t: T) => string): [string, T[]
   }
   return groups;
 }
+
+/**
+ * 그 날 마감인 일이 있었고, 하나도 남지 않았는가.
+ * 빈 배열에 every는 true를 돌려주므로 "계획이 있었는지"를 먼저 본다.
+ * 이 가드가 없으면 마감이 하나도 없는 날까지 전부 완료로 표시된다.
+ */
+export function isDayCleared(planned: { completedAt: string | null }[] | undefined): boolean {
+  return !!planned?.length && planned.every((t) => t.completedAt !== null);
+}

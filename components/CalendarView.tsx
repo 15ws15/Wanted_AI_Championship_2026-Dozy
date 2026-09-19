@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import IconButton from '@/components/IconButton';
 import { ChevronIcon } from '@/components/icons';
-import { monthCells, monthLabel, shiftMonth, thisMonth, todayStr } from '@/lib/date';
+import { isDayCleared, monthCells, monthLabel, shiftMonth, thisMonth, todayStr } from '@/lib/date';
 import type { Task } from '@/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -14,17 +14,23 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
 
   // 마감일은 선택 입력이라 대다수 할 일이 dueDate 없이 쌓인다. 마감만 찍으면
   // 달력이 계속 비어 있게 되므로 끝낸 날도 함께 찍는다.
-  const due: Record<string, Task[]> = {};
+  const byDue: Record<string, Task[]> = {};
   const finished: Record<string, Task[]> = {};
   for (const t of tasks) {
-    if (t.dueDate && !t.completedAt) (due[t.dueDate] ??= []).push(t);
+    if (t.dueDate) (byDue[t.dueDate] ??= []).push(t);
     if (t.completedAt) (finished[t.completedAt.slice(0, 10)] ??= []).push(t);
   }
 
+  const cleared = (date: string) => isDayCleared(byDue[date]);
+  const pendingOn = (date: string) => (byDue[date] ?? []).filter((t) => !t.completedAt);
+
   const today = todayStr();
   // 데이터가 없는 날짜를 눌러도 빈 배열을 받는다. 여기서 깨지면 안 된다.
-  const pickedDue = picked ? (due[picked] ?? []) : [];
-  const pickedDone = picked ? (finished[picked] ?? []) : [];
+  const pickedDue = picked ? (byDue[picked] ?? []) : [];
+  // 마감일이 그 날인 것은 위에서 이미 보여주므로 여기서는 뺀다. 한 번만 나오게 한다.
+  const pickedDone = picked
+    ? (finished[picked] ?? []).filter((t) => t.dueDate !== picked)
+    : [];
 
   return (
     <section className="mt-6">
@@ -45,44 +51,51 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
           </div>
         ))}
 
-        {monthCells(month).map((date, i) =>
-          date === null ? (
-            <div key={`pad-${i}`} />
-          ) : (
+        {monthCells(month).map((date, i) => {
+          if (date === null) return <div key={`pad-${i}`} />;
+          const isPicked = picked === date;
+          const allDone = cleared(date);
+          const [, m, d] = date.split('-');
+
+          return (
             <button
               key={date}
               onClick={() => setPicked(date)}
-              aria-pressed={picked === date}
+              aria-pressed={isPicked}
+              // 배경색만으로 뜻을 전하지 않는다. 읽어주는 도구에는 말로 전한다.
+              aria-label={`${Number(m)}월 ${Number(d)}일${allDone ? ', 계획한 일을 모두 끝낸 날' : ''}`}
               className={`relative flex h-11 w-full items-center justify-center rounded-xl tabular-nums transition-colors ${
-                picked === date
+                isPicked
                   ? 'bg-accent font-medium text-paper'
-                  : date === today
-                    ? 'font-medium text-accent hover:bg-accent-wash'
-                    : 'hover:bg-line/70'
+                  : allDone
+                    ? `bg-done-wash ${date === today ? 'font-medium text-accent' : ''}`
+                    : date === today
+                      ? 'font-medium text-accent hover:bg-accent-wash'
+                      : 'hover:bg-line/70'
               }`}
             >
-              <span className="-translate-y-[3px]">{Number(date.slice(8))}</span>
+              <span className="-translate-y-[3px]">{Number(d)}</span>
               {/* 점은 "여기 뭔가 있다"는 표시일 뿐이다. 마감인지 끝낸 일인지는
                   아래 목록이 글자로 말한다 — 색만으로 뜻을 전달하지 않는다. */}
               <span className="absolute bottom-[6px] flex gap-[3px]">
-                {due[date] && (
+                {pendingOn(date).length > 0 && (
                   <span
                     aria-hidden="true"
-                    className={`h-1 w-1 rounded-full ${picked === date ? 'bg-paper' : 'bg-accent'}`}
+                    className={`h-1 w-1 rounded-full ${isPicked ? 'bg-paper' : 'bg-accent'}`}
                   />
                 )}
                 {finished[date] && (
                   <span
                     aria-hidden="true"
                     className={`h-1 w-1 rounded-full border ${
-                      picked === date ? 'border-paper' : 'border-mute'
+                      isPicked ? 'border-paper' : 'border-mute'
                     }`}
                   />
                 )}
               </span>
             </button>
-          ),
-        )}
+          );
+        })}
       </div>
 
       {picked && (
@@ -91,8 +104,11 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
             <p className="text-sm text-mute">이 날은 비어 있어요.</p>
           ) : (
             <div className="space-y-5">
+              {cleared(picked) && (
+                <p className="text-[13px] text-accent">계획한 일을 모두 끝낸 날이에요.</p>
+              )}
               <DayGroup label="마감" items={pickedDue} />
-              <DayGroup label="끝냄" items={pickedDone} done />
+              <DayGroup label="끝냄" items={pickedDone} />
             </div>
           )}
         </div>
@@ -101,7 +117,7 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
   );
 }
 
-function DayGroup({ label, items, done }: { label: string; items: Task[]; done?: boolean }) {
+function DayGroup({ label, items }: { label: string; items: Task[] }) {
   if (items.length === 0) return null;
   return (
     <div>
@@ -110,7 +126,7 @@ function DayGroup({ label, items, done }: { label: string; items: Task[]; done?:
         {items.map((t) => (
           <li
             key={t.id}
-            className={`text-sm leading-relaxed ${done ? 'text-mute line-through' : ''}`}
+            className={`text-sm leading-relaxed ${t.completedAt ? 'text-mute line-through' : ''}`}
           >
             {t.title}
           </li>
