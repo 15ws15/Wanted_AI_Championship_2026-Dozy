@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import CalendarView from '@/components/CalendarView';
+import ConfirmDelete from '@/components/ConfirmDelete';
 import DayPanel from '@/components/DayPanel';
 import EditDialog from '@/components/EditDialog';
 import { planDay, todayStr } from '@/lib/date';
@@ -15,6 +16,8 @@ export default function Home() {
   const [picked, setPicked] = useState('');
   // 수정창은 페이지가 하나만 들고 있는다. 카드마다 하나씩 만들 이유가 없다.
   const [editing, setEditing] = useState<Task | null>(null);
+  // 할 일 삭제는 되돌릴 수 없어서 한 번 묻는다. 쪼갠 행동은 묻지 않는다.
+  const [deleting, setDeleting] = useState<Task | null>(null);
 
   useEffect(() => {
     setTasks(loadTasks());
@@ -68,11 +71,20 @@ export default function Home() {
             firstRun={tasks.length === 0}
             onAdd={addTask}
             onChange={(id, fn) => setTasks((ts) => ts.map((t) => (t.id === id ? fn(t) : t)))}
-            onRemove={(id) => setTasks((ts) => ts.filter((t) => t.id !== id))}
+            onRemove={setDeleting}
             onEdit={setEditing}
           />
         </div>
       )}
+
+      <ConfirmDelete
+        task={deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          setTasks((ts) => ts.filter((t) => t.id !== deleting?.id));
+          setDeleting(null);
+        }}
+      />
 
       <EditDialog
         task={editing}

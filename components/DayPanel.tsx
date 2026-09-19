@@ -24,7 +24,7 @@ export default function DayPanel({
   firstRun: boolean;
   onAdd: (title: string) => void;
   onChange: (id: string, fn: (t: Task) => Task) => void;
-  onRemove: (id: string) => void;
+  onRemove: (task: Task) => void;
   onEdit: (task: Task) => void;
 }) {
   const [draft, setDraft] = useState('');
@@ -74,7 +74,7 @@ export default function DayPanel({
       task={task}
       reason={pick && pick.id === task.id && !task.completedAt ? pick.reason : null}
       onChange={(fn) => onChange(task.id, fn)}
-      onRemove={() => onRemove(task.id)}
+      onRemove={() => onRemove(task)}
       onEdit={() => onEdit(task)}
     />
   );
