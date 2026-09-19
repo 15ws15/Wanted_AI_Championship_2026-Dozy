@@ -44,15 +44,15 @@ export default function CalendarView({
         <IconButton onClick={() => setMonth(shiftMonth(month, -1))} label="이전 달">
           <ChevronIcon dir="left" />
         </IconButton>
-        <h2 className="text-[15px] font-medium tabular-nums">{monthLabel(month)}</h2>
+        <h2 className="text-[15px] font-medium tabular-nums lg:text-lg">{monthLabel(month)}</h2>
         <IconButton onClick={() => setMonth(shiftMonth(month, 1))} label="다음 달">
           <ChevronIcon dir="right" />
         </IconButton>
       </header>
 
-      <div className="mt-3 grid grid-cols-7 text-center text-[13px]">
+      <div className="mt-3 grid grid-cols-7 text-center text-[13px] lg:mt-5 lg:text-[15px]">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="pb-1 text-mute/70">
+          <div key={d} className="pb-1 text-mute/70 lg:pb-3">
             {d}
           </div>
         ))}
@@ -72,7 +72,7 @@ export default function CalendarView({
               aria-label={`${Number(m)}월 ${Number(d)}일${
                 total > 0 ? `, 하려던 일 ${total}개 중 ${done}개 끝냄` : ''
               }`}
-              className={`relative flex h-11 w-full items-center justify-center overflow-hidden rounded-xl tabular-nums transition-colors ${
+              className={`relative flex h-11 w-full items-center justify-center overflow-hidden rounded-xl tabular-nums transition-colors lg:h-16 ${
                 isPicked
                   ? 'bg-accent font-medium text-paper'
                   : date === today
@@ -90,14 +90,14 @@ export default function CalendarView({
                 />
               )}
 
-              <span className="relative -translate-y-[3px]">{Number(d)}</span>
+              <span className="relative -translate-y-[3px] lg:-translate-y-[6px]">{Number(d)}</span>
 
               {/* 아직 남은 일이 있는 날을 표시한다. 지난 날에 남겨둔 것을
                   목록에서는 볼 수 없으므로, 여기가 그걸 알려주는 유일한 자리다. */}
               {done < total && (
                 <span
                   aria-hidden="true"
-                  className={`absolute bottom-[6px] h-1 w-1 rounded-full ${
+                  className={`absolute bottom-[6px] h-1 w-1 rounded-full lg:bottom-[13px] lg:h-1.5 lg:w-1.5 ${
                     isPicked ? 'bg-paper' : 'bg-accent'
                   }`}
                 />
@@ -109,7 +109,7 @@ export default function CalendarView({
 
       {pickedProgress.total > 0 && (
         <p
-          className={`mt-3 text-center text-[13px] ${
+          className={`mt-3 text-center text-[13px] lg:mt-5 ${
             pickedProgress.done === pickedProgress.total ? 'text-accent' : 'text-mute'
           }`}
         >

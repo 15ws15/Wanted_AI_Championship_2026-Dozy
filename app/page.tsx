@@ -92,88 +92,94 @@ export default function Home() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-xl px-5 pb-20 pt-12 sm:pt-20">
+    <main className="mx-auto w-full max-w-xl px-5 pb-20 pt-12 sm:pt-20 lg:max-w-5xl">
       <header className="mb-9">
         <h1 className="font-serif text-2xl tracking-tight">Dozy</h1>
         <p className="mt-1.5 text-sm text-mute">시작하기 어려운 일을, 지금 할 수 있는 한 가지로.</p>
       </header>
 
       {loaded && (
-        <>
-          <CalendarView tasks={tasks} picked={picked} onPick={setPicked} />
+        // 넓은 화면에서는 달력을 왼쪽에 세워두고 오른쪽에서 그 날 목록을 다룬다.
+        // items-start가 없으면 칸이 늘어나 sticky가 걸리지 않는다.
+        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-12">
+          <div className="lg:sticky lg:top-8">
+            <CalendarView tasks={tasks} picked={picked} onPick={setPicked} />
+          </div>
 
-          <h2 className="mt-8 text-[15px] font-medium">{dayLabel(picked)}</h2>
+          <div>
+            <h2 className="mt-8 text-[15px] font-medium lg:mt-0">{dayLabel(picked)}</h2>
 
-          <form
-            onSubmit={add}
-            className="mt-1 flex items-center gap-2 border-b border-line-strong pb-2 focus-within:border-accent"
-          >
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              maxLength={200}
-              placeholder="예: 보고서 작성"
-              aria-label={`${dayLabel(picked)}에 할 일`}
-              className="min-w-0 flex-1 bg-transparent py-2 outline-none placeholder:text-mute/60"
-            />
-            <button
-              type="submit"
-              disabled={!draft.trim()}
-              aria-label="할 일 추가"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-mute transition-colors hover:bg-accent-wash hover:text-accent disabled:opacity-30"
+            <form
+              onSubmit={add}
+              className="mt-1 flex items-center gap-2 border-b border-line-strong pb-2 focus-within:border-accent"
             >
-              <PlusIcon className="h-5 w-5" />
-            </button>
-          </form>
-
-          {open.length > 0 && (
-            <div className="mt-5">
+              <input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                maxLength={200}
+                placeholder="예: 보고서 작성"
+                aria-label={`${dayLabel(picked)}에 할 일`}
+                className="min-w-0 flex-1 bg-transparent py-2 outline-none placeholder:text-mute/60"
+              />
               <button
-                onClick={recommend}
-                disabled={picking}
-                className="min-h-11 rounded-full bg-accent px-5 text-[13px] font-medium text-paper transition-opacity hover:opacity-90 disabled:opacity-50"
+                type="submit"
+                disabled={!draft.trim()}
+                aria-label="할 일 추가"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-mute transition-colors hover:bg-accent-wash hover:text-accent disabled:opacity-30"
               >
-                {picking ? '목록을 보는 중…' : '뭐부터 할지 모르겠어요'}
+                <PlusIcon className="h-5 w-5" />
               </button>
-              {pickError && (
-                <p role="status" className="mt-2 text-[13px] text-mute">
-                  {pickError}
-                </p>
-              )}
-            </div>
-          )}
+            </form>
 
-          {/* 처음 열었을 때만 안내를 편다. 할 일이 이미 있는데 빈 날을 고른 것뿐이라면
-              같은 안내를 다시 읽힐 이유가 없다. */}
-          {tasks.length === 0 ? (
-            <EmptyState onPick={addTask} />
-          ) : (
-            onPicked.length === 0 && <p className="mt-8 text-sm text-mute">이 날은 비어 있어요.</p>
-          )}
+            {open.length > 0 && (
+              <div className="mt-5">
+                <button
+                  onClick={recommend}
+                  disabled={picking}
+                  className="min-h-11 rounded-full bg-accent px-5 text-[13px] font-medium text-paper transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {picking ? '목록을 보는 중…' : '뭐부터 할지 모르겠어요'}
+                </button>
+                {pickError && (
+                  <p role="status" className="mt-2 text-[13px] text-mute">
+                    {pickError}
+                  </p>
+                )}
+              </div>
+            )}
 
-          {open.length > 0 && (
-            <section className="mt-8">
-              <h3 className="text-[13px] text-mute">
-                남은 일 <span className="tabular-nums text-ink">{open.length}</span>
-              </h3>
-              <ul className="mt-1 divide-y divide-line">{open.map(card)}</ul>
-            </section>
-          )}
+            {/* 처음 열었을 때만 안내를 편다. 할 일이 이미 있는데 빈 날을 고른 것뿐이라면
+                같은 안내를 다시 읽힐 이유가 없다. */}
+            {tasks.length === 0 ? (
+              <EmptyState onPick={addTask} />
+            ) : (
+              onPicked.length === 0 && <p className="mt-8 text-sm text-mute">이 날은 비어 있어요.</p>
+            )}
 
-          {done.length > 0 && (
-            <section className="mt-9">
-              <button
-                onClick={() => setShowDone((v) => !v)}
-                aria-expanded={showDone}
-                className="min-h-11 text-[13px] text-mute transition-colors hover:text-ink"
-              >
-                끝낸 일 <span className="tabular-nums">{done.length}</span>
-                <span aria-hidden="true">{showDone ? ' ⌃' : ' ⌄'}</span>
-              </button>
-              {showDone && <ul className="divide-y divide-line">{done.map(card)}</ul>}
-            </section>
-          )}
-        </>
+            {open.length > 0 && (
+              <section className="mt-8">
+                <h3 className="text-[13px] text-mute">
+                  남은 일 <span className="tabular-nums text-ink">{open.length}</span>
+                </h3>
+                <ul className="mt-1 divide-y divide-line">{open.map(card)}</ul>
+              </section>
+            )}
+
+            {done.length > 0 && (
+              <section className="mt-9">
+                <button
+                  onClick={() => setShowDone((v) => !v)}
+                  aria-expanded={showDone}
+                  className="min-h-11 text-[13px] text-mute transition-colors hover:text-ink"
+                >
+                  끝낸 일 <span className="tabular-nums">{done.length}</span>
+                  <span aria-hidden="true">{showDone ? ' ⌃' : ' ⌄'}</span>
+                </button>
+                {showDone && <ul className="divide-y divide-line">{done.map(card)}</ul>}
+              </section>
+            )}
+          </div>
+        </div>
       )}
     </main>
   );
