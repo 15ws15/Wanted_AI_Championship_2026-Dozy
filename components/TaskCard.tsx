@@ -5,6 +5,7 @@ import Check from '@/components/Check';
 import EditableTitle from '@/components/EditableTitle';
 import IconButton from '@/components/IconButton';
 import { RetryIcon, XIcon } from '@/components/icons';
+import { planDay, rescheduleTarget } from '@/lib/date';
 import type { Step, Task } from '@/types';
 
 const MAX_DEPTH = 3;
@@ -21,6 +22,7 @@ export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const done = !!task.completedAt;
+  const move = rescheduleTarget(planDay(task));
   const steps = task.steps;
   const last = steps[steps.length - 1];
 
@@ -173,6 +175,15 @@ export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
                 <XIcon />
               </IconButton>
             </>
+          )}
+
+          {move && (
+            <button
+              onClick={() => onChange((t) => ({ ...t, dueDate: move.to }))}
+              className="min-h-11 rounded-full px-3 text-[13px] text-mute transition-colors hover:text-accent"
+            >
+              {move.label}
+            </button>
           )}
 
           {error && (

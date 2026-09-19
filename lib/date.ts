@@ -10,11 +10,17 @@ export function todayStr(): string {
   return ymd(new Date());
 }
 
-function shiftDays(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return ymd(d);
+/**
+ * YYYY-MM-DD에서 n일 뒤. 문자열로 받아 문자열로 돌려준다.
+ * 월말·연말 넘김은 Date에 맡긴다 — 12월 31일 다음이 1월 1일이 되는 계산을
+ * 직접 짜면 윤년과 월별 일수를 다시 구현하게 된다.
+ */
+export function addDays(dateStr: string, n: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return ymd(new Date(y, m - 1, d + n));
 }
+
+const shiftDays = (n: number) => addDays(todayStr(), n);
 
 export type Month = { year: number; month: number };
 
@@ -88,4 +94,18 @@ export function localDay(iso: string): string {
  */
 export function planDay(task: { dueDate: string | null; createdAt: string }): string {
   return task.dueDate ?? localDay(task.createdAt);
+}
+
+/**
+ * 이 날의 일을 어디로 옮길 수 있는가.
+ * 지난 날에 남은 것은 오늘로 끌어오고, 오늘 버거운 것은 내일로 미룬다.
+ * 앞날의 일은 이미 계획된 자리에 있으므로 옮길 곳을 주지 않는다.
+ *
+ * 자동으로 옮기지 않는 이유는, 미룬 일이 매일 따라다니면 그 자체가 압박이 되어서다.
+ */
+export function rescheduleTarget(day: string): { label: string; to: string } | null {
+  const today = todayStr();
+  if (day < today) return { label: '오늘 하기', to: today };
+  if (day === today) return { label: '내일 하기', to: addDays(today, 1) };
+  return null;
 }

@@ -1,7 +1,9 @@
 // node lib/date.test.ts
 import assert from 'node:assert';
 import {
+  addDays,
   dayLabel,
+  rescheduleTarget,
   dayProgress,
   localDay,
   planDay,
@@ -96,5 +98,30 @@ const made = new Date(2026, 8, 19, 9, 0).toISOString();
 assert.strictEqual(planDay({ dueDate: '2026-09-25', createdAt: made }), '2026-09-25');
 // 안 적었으면 만든 날 (첫 화면이 "오늘 할 일"이므로)
 assert.strictEqual(planDay({ dueDate: null, createdAt: made }), '2026-09-19');
+
+// --- 날짜 이동 (오늘 하기 / 내일 하기) ---
+assert.strictEqual(addDays('2026-09-19', 1), '2026-09-20');
+assert.strictEqual(addDays('2026-09-19', -1), '2026-09-18');
+assert.strictEqual(addDays('2026-09-19', 0), '2026-09-19');
+
+// 월말·연말·윤년 넘김. 여기가 깨지면 "내일 하기"가 없는 날짜를 만든다.
+assert.strictEqual(addDays('2026-09-30', 1), '2026-10-01');
+assert.strictEqual(addDays('2026-12-31', 1), '2027-01-01');
+assert.strictEqual(addDays('2026-01-01', -1), '2025-12-31');
+assert.strictEqual(addDays('2024-02-28', 1), '2024-02-29');  // 윤년
+assert.strictEqual(addDays('2025-02-28', 1), '2025-03-01');  // 평년
+
+// 결과는 항상 같은 형식이어야 한다. 달력 칸을 찾는 열쇠로 쓰이기 때문이다.
+for (const n of [1, 15, 200, -365]) {
+  assert.match(addDays('2026-09-19', n), /^\d{4}-\d{2}-\d{2}$/);
+}
+
+// --- 옮길 곳 ---
+assert.deepStrictEqual(rescheduleTarget(shift(-1)), { label: '오늘 하기', to: shift(0) });
+assert.deepStrictEqual(rescheduleTarget(shift(-30)), { label: '오늘 하기', to: shift(0) });
+assert.deepStrictEqual(rescheduleTarget(shift(0)), { label: '내일 하기', to: shift(1) });
+// 앞날의 일은 이미 계획된 자리에 있다
+assert.strictEqual(rescheduleTarget(shift(1)), null);
+assert.strictEqual(rescheduleTarget(shift(7)), null);
 
 console.log('date.ts ok');
