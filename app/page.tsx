@@ -113,10 +113,10 @@ export default function Home() {
           <Image
             src="/dozy-logo.png"
             alt="Dozy"
-            width={1983}
-            height={793}
+            width={1254}
+            height={1254}
             priority
-            className="h-11 w-auto"
+            className="h-10 w-10 object-contain"
           />
         </h1>
         <p className="mt-1.5 text-sm text-mute">
