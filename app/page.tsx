@@ -5,7 +5,7 @@ import CalendarView from '@/components/CalendarView';
 import EmptyState from '@/components/EmptyState';
 import { PlusIcon } from '@/components/icons';
 import TaskCard from '@/components/TaskCard';
-import { dueLabel } from '@/lib/date';
+import { dayLabel, planDay, todayStr } from '@/lib/date';
 import { loadTasks, saveTasks } from '@/lib/storage';
 import type { Task } from '@/types';
 
@@ -13,7 +13,8 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [draft, setDraft] = useState('');
-  const [due, setDue] = useState('');
+  // "오늘"은 브라우저에서만 정할 수 있다. 서버는 UTC라 미리 정해두면 새벽에 날짜가 어긋난다.
+  const [picked, setPicked] = useState('');
   const [pick, setPick] = useState<{ id: string; reason: string } | null>(null);
   const [picking, setPicking] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
@@ -21,6 +22,7 @@ export default function Home() {
 
   useEffect(() => {
     setTasks(loadTasks());
+    setPicked(todayStr());
     setLoaded(true);
   }, []);
 
@@ -28,14 +30,15 @@ export default function Home() {
     if (loaded) saveTasks(tasks);
   }, [tasks, loaded]);
 
-  function addTask(title: string, dueDate: string | null = null) {
+  function addTask(title: string) {
     setTasks((ts) => [
       ...ts,
       {
         id: crypto.randomUUID(),
         title,
         createdAt: new Date().toISOString(),
-        dueDate,
+        // 달력에서 고른 날이 곧 이 일을 하려는 날이다.
+        dueDate: picked,
         completedAt: null,
         steps: [],
       },
@@ -46,27 +49,23 @@ export default function Home() {
     e.preventDefault();
     const title = draft.trim();
     if (!title) return;
-    addTask(title, due || null);
+    addTask(title);
     setDraft('');
-    setDue('');
   }
 
-  const open = tasks.filter((t) => !t.completedAt);
-  const done = tasks.filter((t) => t.completedAt);
+  const onPicked = tasks.filter((t) => planDay(t) === picked);
+  const open = onPicked.filter((t) => !t.completedAt);
+  const done = onPicked.filter((t) => t.completedAt);
 
   async function recommend() {
     setPicking(true);
     setPickError(null);
     setPick(null);
-    // API 계약은 titles: string[] 하나다. 추천 판단에 필요한 마감일은 제목 문자열에 실어 보낸다.
-    const titles = open.map((t) =>
-      t.dueDate ? `${t.title} (마감 ${dueLabel(t.dueDate).text})` : t.title,
-    );
     try {
       const res = await fetch('/api/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ titles }),
+        body: JSON.stringify({ titles: open.map((t) => t.title) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -99,26 +98,23 @@ export default function Home() {
         <p className="mt-1.5 text-sm text-mute">시작하기 어려운 일을, 지금 할 수 있는 한 가지로.</p>
       </header>
 
-      <CalendarView tasks={tasks} />
+      {loaded && (
+        <>
+          <CalendarView tasks={tasks} picked={picked} onPick={setPicked} />
+
+          <h2 className="mt-8 text-[15px] font-medium">{dayLabel(picked)}</h2>
 
           <form
             onSubmit={add}
-            className="mt-8 flex flex-wrap items-center gap-2 border-b border-line-strong pb-2 focus-within:border-accent"
+            className="mt-1 flex items-center gap-2 border-b border-line-strong pb-2 focus-within:border-accent"
           >
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               maxLength={200}
               placeholder="예: 보고서 작성"
-              aria-label="할 일"
-              className="min-w-0 flex-1 basis-full bg-transparent py-2 outline-none placeholder:text-mute/60 sm:basis-0"
-            />
-            <input
-              type="date"
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-              aria-label="마감일 (선택)"
-              className="min-h-11 shrink-0 bg-transparent text-[13px] text-mute outline-none"
+              aria-label={`${dayLabel(picked)}에 할 일`}
+              className="min-w-0 flex-1 bg-transparent py-2 outline-none placeholder:text-mute/60"
             />
             <button
               type="submit"
@@ -147,13 +143,19 @@ export default function Home() {
             </div>
           )}
 
-          {loaded && tasks.length === 0 && <EmptyState onPick={(t) => addTask(t)} />}
+          {/* 처음 열었을 때만 안내를 편다. 할 일이 이미 있는데 빈 날을 고른 것뿐이라면
+              같은 안내를 다시 읽힐 이유가 없다. */}
+          {tasks.length === 0 ? (
+            <EmptyState onPick={addTask} />
+          ) : (
+            onPicked.length === 0 && <p className="mt-8 text-sm text-mute">이 날은 비어 있어요.</p>
+          )}
 
           {open.length > 0 && (
             <section className="mt-8">
-              <h2 className="text-[13px] text-mute">
+              <h3 className="text-[13px] text-mute">
                 남은 일 <span className="tabular-nums text-ink">{open.length}</span>
-              </h2>
+              </h3>
               <ul className="mt-1 divide-y divide-line">{open.map(card)}</ul>
             </section>
           )}
@@ -171,6 +173,8 @@ export default function Home() {
               {showDone && <ul className="divide-y divide-line">{done.map(card)}</ul>}
             </section>
           )}
+        </>
+      )}
     </main>
   );
 }

@@ -5,7 +5,6 @@ import Check from '@/components/Check';
 import EditableTitle from '@/components/EditableTitle';
 import IconButton from '@/components/IconButton';
 import { RetryIcon, XIcon } from '@/components/icons';
-import { dueLabel } from '@/lib/date';
 import type { Step, Task } from '@/types';
 
 const MAX_DEPTH = 3;
@@ -24,7 +23,6 @@ export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
   const done = !!task.completedAt;
   const steps = task.steps;
   const last = steps[steps.length - 1];
-  const due = task.dueDate ? dueLabel(task.dueDate) : null;
 
   /** prev 다음에 올 행동을 받아온다. prev가 없으면 할 일 자체의 첫 행동이다. */
   async function fetchStep(prev: Step | undefined): Promise<string | null> {
@@ -123,15 +121,6 @@ export default function TaskCard({ task, reason, onChange, onRemove }: Props) {
           done={done}
           onSave={(title) => onChange((t) => ({ ...t, title }))}
         />
-        {due && (
-          <span
-            className={`shrink-0 self-center text-[13px] tabular-nums ${
-              due.urgent && !done ? 'font-medium text-accent' : 'text-mute'
-            }`}
-          >
-            {due.text}
-          </span>
-        )}
         <IconButton onClick={onRemove} label={`${task.title} 삭제`} quiet>
           <XIcon />
         </IconButton>

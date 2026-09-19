@@ -16,19 +16,6 @@ function shiftDays(n: number): string {
   return ymd(d);
 }
 
-export type Due = { text: string; urgent: boolean };
-
-/** 마감일을 사람이 읽는 라벨로. urgent면 마감이 임박했다는 뜻이다. */
-export function dueLabel(dueDate: string): Due {
-  const today = todayStr();
-  if (dueDate < today) return { text: '지났어요', urgent: true };
-  if (dueDate === today) return { text: '오늘까지', urgent: true };
-  if (dueDate === shiftDays(1)) return { text: '내일까지', urgent: true };
-
-  const [, m, d] = dueDate.split('-');
-  return { text: `~${Number(m)}/${Number(d)}`, urgent: false };
-}
-
 export type Month = { year: number; month: number };
 
 export function thisMonth(): Month {

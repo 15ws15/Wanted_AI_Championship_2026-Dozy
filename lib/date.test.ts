@@ -2,7 +2,6 @@
 import assert from 'node:assert';
 import {
   dayLabel,
-  dueLabel,
   dayProgress,
   localDay,
   planDay,
@@ -19,13 +18,6 @@ const shift = (n: number) => {
 };
 
 assert.strictEqual(todayStr(), shift(0));
-assert.deepStrictEqual(dueLabel(shift(-1)), { text: '지났어요', urgent: true });
-assert.deepStrictEqual(dueLabel(shift(0)), { text: '오늘까지', urgent: true });
-assert.deepStrictEqual(dueLabel(shift(1)), { text: '내일까지', urgent: true });
-assert.strictEqual(dueLabel(shift(30)).urgent, false);
-assert.deepStrictEqual(dueLabel('2099-01-05'), { text: '~1/5', urgent: false });
-assert.deepStrictEqual(dueLabel('2099-12-25'), { text: '~12/25', urgent: false });
-
 // shiftDays가 기대는 전제: setDate 넘김이 월/연 경계를 넘어간다.
 // 이게 깨지면 1월 31일에 "내일까지"가 영원히 안 뜬다.
 const jan31 = new Date(2024, 0, 31);

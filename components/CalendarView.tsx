@@ -4,9 +4,7 @@ import { useState } from 'react';
 import IconButton from '@/components/IconButton';
 import { ChevronIcon } from '@/components/icons';
 import {
-  dayLabel,
   dayProgress,
-  localDay,
   monthCells,
   monthLabel,
   planDay,
@@ -18,32 +16,27 @@ import type { Task } from '@/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-export default function CalendarView({ tasks }: { tasks: Task[] }) {
+/**
+ * 고른 날짜는 페이지가 갖는다. 달력이 날짜를 고르는 도구이면서 동시에
+ * 그 날 목록을 여는 열쇠라서, 아래 목록과 같은 상태를 봐야 한다.
+ */
+export default function CalendarView({
+  tasks,
+  picked,
+  onPick,
+}: {
+  tasks: Task[];
+  picked: string;
+  onPick: (date: string) => void;
+}) {
   const [month, setMonth] = useState(thisMonth());
-  const [picked, setPicked] = useState<string | null>(todayStr());
 
-  // 마감일이 없는 할 일도 만든 날의 계획으로 잡는다. 마감일은 선택 입력이라
-  // 대다수가 날짜 없이 쌓이는데, 그것들을 빼면 달력이 실제로 한 일을 반영하지 못한다.
+  // 마감일이 없는 옛 할 일은 만든 날의 계획으로 잡는다. planDay가 그 규칙을 갖는다.
   const planned: Record<string, Task[]> = {};
-  const finished: Record<string, Task[]> = {};
-  for (const t of tasks) {
-    (planned[planDay(t)] ??= []).push(t);
-    if (t.completedAt) (finished[localDay(t.completedAt)] ??= []).push(t);
-  }
-
-  const progressOn = (date: string) => dayProgress(planned[date]);
+  for (const t of tasks) (planned[planDay(t)] ??= []).push(t);
 
   const today = todayStr();
-  // 데이터가 없는 날짜를 눌러도 빈 배열을 받는다. 여기서 깨지면 안 된다.
-  const pickedPlan = picked ? (planned[picked] ?? []) : [];
-  // 그 날 계획이었던 것은 위에 이미 나오므로 뺀다. 한 번만 보이게 한다.
-  const pickedDone = picked
-    ? (finished[picked] ?? []).filter((t) => planDay(t) !== picked)
-    : [];
-
-  // 오늘을 고른 상태에서는 상세를 접는다. 바로 아래 목록이 같은 내용을
-  // 이미 보여주고 있어서, 펼쳐두면 같은 말을 두 번 하는 셈이 된다.
-  const showDetail = !!picked && picked !== today;
+  const pickedProgress = dayProgress(planned[picked]);
 
   return (
     <section>
@@ -67,13 +60,13 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
         {monthCells(month).map((date, i) => {
           if (date === null) return <div key={`pad-${i}`} />;
           const isPicked = picked === date;
-          const { total, done, ratio } = progressOn(date);
+          const { total, done, ratio } = dayProgress(planned[date]);
           const [, m, d] = date.split('-');
 
           return (
             <button
               key={date}
-              onClick={() => setPicked(date)}
+              onClick={() => onPick(date)}
               aria-pressed={isPicked}
               // 차오른 높이만으로 뜻을 전하지 않는다. 읽어주는 도구에는 말로 전한다.
               aria-label={`${Number(m)}월 ${Number(d)}일${
@@ -99,79 +92,32 @@ export default function CalendarView({ tasks }: { tasks: Task[] }) {
 
               <span className="relative -translate-y-[3px]">{Number(d)}</span>
 
-              {/* 점은 "여기 뭔가 있다"는 표시일 뿐이다. 마감인지 끝낸 일인지는
-                  아래 목록이 글자로 말한다. */}
-              <span className="absolute bottom-[6px] flex gap-[3px]">
-                {done < total && (
-                  <span
-                    aria-hidden="true"
-                    className={`h-1 w-1 rounded-full ${isPicked ? 'bg-paper' : 'bg-accent'}`}
-                  />
-                )}
-                {finished[date] && (
-                  <span
-                    aria-hidden="true"
-                    className={`h-1 w-1 rounded-full border ${
-                      isPicked ? 'border-paper' : 'border-mute'
-                    }`}
-                  />
-                )}
-              </span>
+              {/* 아직 남은 일이 있는 날을 표시한다. 지난 날에 남겨둔 것을
+                  목록에서는 볼 수 없으므로, 여기가 그걸 알려주는 유일한 자리다. */}
+              {done < total && (
+                <span
+                  aria-hidden="true"
+                  className={`absolute bottom-[6px] h-1 w-1 rounded-full ${
+                    isPicked ? 'bg-paper' : 'bg-accent'
+                  }`}
+                />
+              )}
             </button>
           );
         })}
       </div>
 
-      {picked === today && progressOn(today).total > 0 && (
-        <div className="mt-3 text-center">
-          <DayProgressNote {...progressOn(today)} />
-        </div>
-      )}
-
-      {showDetail && (
-        <div className="mt-4 border-t border-line pt-4">
-          <h3 className="mb-3 text-[13px] font-medium">{dayLabel(picked)}</h3>
-          {pickedPlan.length === 0 && pickedDone.length === 0 ? (
-            <p className="text-sm text-mute">이 날은 비어 있어요.</p>
-          ) : (
-            <div className="space-y-5">
-              {progressOn(picked).total > 0 && <DayProgressNote {...progressOn(picked)} />}
-              <DayGroup label="이 날 하려던 일" items={pickedPlan} />
-              <DayGroup label="이 날 끝낸 다른 일" items={pickedDone} />
-            </div>
-          )}
-        </div>
+      {pickedProgress.total > 0 && (
+        <p
+          className={`mt-3 text-center text-[13px] ${
+            pickedProgress.done === pickedProgress.total ? 'text-accent' : 'text-mute'
+          }`}
+        >
+          {pickedProgress.done === pickedProgress.total
+            ? '계획한 일을 모두 끝낸 날이에요.'
+            : `하려던 일 ${pickedProgress.total}개 중 ${pickedProgress.done}개 끝냈어요.`}
+        </p>
       )}
     </section>
-  );
-}
-
-/** 숫자는 사실만 적는다. 퍼센트나 점수로 바꾸지 않는다. */
-function DayProgressNote({ total, done }: { total: number; done: number }) {
-  return (
-    <p className={`text-[13px] ${done === total ? 'text-accent' : 'text-mute'}`}>
-      {done === total
-        ? '계획한 일을 모두 끝낸 날이에요.'
-        : `하려던 일 ${total}개 중 ${done}개 끝냈어요.`}
-    </p>
-  );
-}
-
-function DayGroup({ label, items }: { label: string; items: Task[] }) {
-  if (items.length === 0) return null;
-  return (
-    <div>
-      <h4 className="text-[13px] text-mute">{label}</h4>
-      <ul className="mt-2 space-y-2">
-        {items.map((t) => (
-          <li
-            key={t.id}
-            className={`text-sm leading-relaxed ${t.completedAt ? 'text-mute line-through' : ''}`}
-          >
-            {t.title}
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
