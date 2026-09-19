@@ -4,6 +4,7 @@ export type Task = {
   createdAt: string;
   dueDate: string | null;
   completedAt: string | null;
+  note: string | null;
   steps: Step[];
 };
 
