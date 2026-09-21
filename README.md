@@ -1,10 +1,10 @@
 # Dozy
 
-할 일을 5분 안에 할 수 있는 행동 하나로 바꿔주는 웹 앱.
+미루고 있는 일을 지금 할 수 있는 하나로 줄여준다. "보고서 작성"은 "제목 후보 3개 적기"가 된다.
 
 **→ [wanted-ai-championship-2026-dozy.vercel.app](https://wanted-ai-championship-2026-dozy.vercel.app)**
 
-원티드 AI 챔피언십 2026 출품작. 로그인 없이 바로 열린다.
+원티드 AI 챔피언십 2026 출품작. 설치도 로그인도 없다.
 
 ---
 
