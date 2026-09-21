@@ -78,6 +78,8 @@
 
 Gemini는 덩어리를 부수는 데만 쓴다. 저장하고 체크하고 달력에 배치하는 건 전부 일반 코드다. AI가 멈춰도 할 일 관리는 그대로 된다.
 
+Gemini가 실패하면 HuggingFace Space에 올린 HyperCLOVA로 한 번 더 시도한다. 무료 티어라 분당 한도에 걸리는 날이 있어서 붙였다.
+
 **쪼개기** — 할 일 하나를 받아 첫 행동 하나를 돌려준다.
 
 **더 잘게 쪼개기** — 원래 할 일과 방금 받은 행동을 같이 넘겨서 한 칸 아래를 만든다. 대화를 이어가는 게 아니라 매번 독립된 호출이고, 직전 단계를 컨텍스트로 명시해서 준다.
@@ -128,10 +130,13 @@ few-shot 예시도 빼야 했다. `할 일 → 행동` 쌍을 나열했더니 �
 | 프레임워크 | Next.js 16 (App Router) + TypeScript |
 | 스타일 | Tailwind CSS v4 |
 | LLM | Google Gemini `gemini-3.5-flash-lite` |
-| 저장 | localStorage |
+| 저장 | Firebase (설정 없으면 localStorage) |
+| AI 폴백 | HyperCLOVA (HuggingFace Space) |
 | 배포 | Vercel |
 
-**런타임 의존성 4개.** 상태 관리도, UI 컴포넌트 라이브러리도, 날짜 라이브러리도 안 썼다. 달력은 직접 그렸다. 1일의 요일만큼 앞을 비우고 그 달 날짜를 채우면 끝이라 라이브러리를 들일 이유가 없었다.
+**저장은 두 갈래다.** Firebase 설정이 있으면 모두가 같은 보드를 보고 실시간으로 동기화된다. 설정이 없으면 브라우저 localStorage만 쓴다. 어느 쪽이든 저장된 값이 깨져 있어도 앱은 빈 목록으로 뜬다.
+
+**나머지 의존성은 최소로 뒀다.** 상태 관리도, UI 컴포넌트 라이브러리도, 날짜 라이브러리도 안 썼다. 달력은 직접 그렸다. 1일의 요일만큼 앞을 비우고 그 달 날짜를 채우면 끝이라 라이브러리를 들일 이유가 없었다.
 
 **API 키는 서버에서만 쓴다.** LLM 호출은 전부 Route Handler를 거친다. 배포된 JS 청크를 전부 받아서 키도 프롬프트도 안 들어갔는지 확인했다.
 
@@ -151,14 +156,13 @@ npm test
 
 ```bash
 npm install
-
-# https://aistudio.google.com/apikey 에서 발급
-echo "GEMINI_API_KEY=발급받은_키" > .env.local
-
+cp .env.example .env.local   # GEMINI_API_KEY만 채우면 돌아간다
 npm run dev
 ```
 
 http://localhost:3000
+
+Gemini 키는 [AI Studio](https://aistudio.google.com/apikey)에서 받는다. Firebase와 HyperCLOVA 값은 비워둬도 된다. 비우면 저장은 localStorage로, AI는 Gemini만 쓰는 모드로 동작한다.
 
 ---
 
